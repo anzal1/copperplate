@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <link rel="icon" href="data:," />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Copperplate perf</title>
+    <style>
+      body { margin: 0; background: #0a0a0a; }
+      #grid { display: grid; gap: 8px; padding: 8px; height: 100vh; box-sizing: border-box; }
+    </style>
+  </head>
+  <body>
+    <div id="grid"></div>
+    <script type="module">
+      import { engrave, setLamp } from 'copperplate';
+      const q = new URLSearchParams(location.search);
+      const n = Number(q.get('n') ?? 24);
+      const resolution = Number(q.get('res') ?? 800);
+      const cols = Math.ceil(Math.sqrt(n * (innerWidth / innerHeight)));
+      const rows = Math.ceil(n / cols);
+      const grid = document.getElementById('grid');
+      grid.style.gridTemplateColumns = `repeat(${cols}, minmax(0, 1fr))`;
+      grid.style.gridTemplateRows = `repeat(${rows}, minmax(0, 1fr))`;
+      const srcs = ['/img/verso-knight-day.webp', '/img/creation-of-adam.jpg', '/img/plate-colonnade-day.jpg'];
+      for (let i = 0; i < n; i++) {
+        const d = document.createElement('div');
+        grid.append(d);
+        engrave(d, { src: srcs[i % 3], alt: '', resolution });
+      }
+      // Sample frame times while the light sweeps a circle, as a pointer would.
+      window.__sample = (ms = 3000, mode = 'lamp') =>
+        new Promise((done) => {
+          const times = [];
+          let t0 = 0;
+          let last = 0;
+          const step = (t) => {
+            if (!t0) t0 = last = t;
+            else { times.push(t - last); last = t; }
+            if (mode === 'lamp') {
+              const a = (t - t0) / 600;
+              setLamp({ x: innerWidth * (0.5 + 0.4 * Math.cos(a)), y: innerHeight * (0.5 + 0.4 * Math.sin(a)) });
+            }
+            if (t - t0 < ms) requestAnimationFrame(step);
+            else { setLamp(null); done(times); }
+          };
+          requestAnimationFrame(step);
+        });
+    </script>
+  </body>
+</html>
