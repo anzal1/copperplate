@@ -1,0 +1,10 @@
+{
+  // The demo site, copperplate.anzalabidi.dev: static assets only, no script.
+  // Build it first with `npm run demo:build`; CI does both on every push to main.
+  "$schema": "https://unpkg.com/wrangler/config-schema.json",
+  "name": "copperplate",
+  "compatibility_date": "2026-09-21",
+  "assets": { "directory": "./demo/dist", "not_found_handling": "404-page" },
+  "routes": [{ "pattern": "copperplate.anzalabidi.dev", "custom_domain": true }],
+  "workers_dev": false
+}

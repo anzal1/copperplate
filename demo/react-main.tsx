@@ -20,7 +20,7 @@ function App() {
           </button>
         ))}
       </p>
-      <Engraving id="react-plate" src="/img/verso-knight-day.webp" alt="Dürer, Knight, Death and the Devil" material={material} className="plate-host" style={{ width: 'min(100%, 420px)', aspectRatio: '1', marginTop: 24 }} />
+      <Engraving id="react-plate" src="/gallery/durer-knight.webp" alt="Dürer, Knight, Death and the Devil" material={material} className="plate-host" style={{ width: 'min(100%, 420px)', aspectRatio: '1', marginTop: 24 }} />
     </main>
   );
 }

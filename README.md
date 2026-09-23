@@ -4,6 +4,12 @@ Copperplate turns any image into an engraved metal plate that catches a moving l
 
 No canvas, no WebGL, no runtime dependencies. About 6 kB gzipped.
 
+**Live demo: [copperplate.anzalabidi.dev](https://copperplate.anzalabidi.dev)**, thirty-eight public-domain works engraved on one page. Move the pointer over them.
+
+![Hokusai's Great Wave engraved in copper](demo/shots/00-hero-dark.jpg)
+
+![The demo gallery: Piranesi, Hiroshige, Haeckel and a Greek grave stele, engraved in copper](demo/shots/00-gallery-dark.jpg)
+
 ## Install
 
 ```sh
@@ -158,11 +164,7 @@ npm run shots     # demo screenshots into demo/shots/
 
 ## Credits
 
-The demo artworks are in the public domain:
-
-- Albrecht Dürer, *Knight, Death and the Devil*, engraving, 1513.
-- Michelangelo, *The Creation of Adam*, detail, fresco, c. 1512, Sistine Chapel (via Wikimedia Commons).
-- Hubert Robert, *A Colonnade in Ruins*, The Metropolitan Museum of Art.
+The demo shows thirty-eight works, all in the public domain: engravings and woodcuts by Dürer, Rembrandt, Piranesi, Goya, Hokusai and Hiroshige; Greek, Roman and Egyptian sculpture, reliefs and coins; Ernst Haeckel's *Kunstformen der Natur* and Vesalius; maps by Hondius, Blaeu and Ortelius and Bayer's star atlas; NASA photographs of the Moon; and photographs by Muybridge, Julia Margaret Cameron and Nadar. They come from The Metropolitan Museum of Art's Open Access collection (CC0), Wikimedia Commons, and NASA (US government works). Every work, with its source page and licence, is listed in [`demo/gallery.json`](demo/gallery.json) and in the credits on the demo page.
 
 The demo sets its text in Fraunces, Newsreader and JetBrains Mono, all under the SIL Open Font License.
 

@@ -13,6 +13,7 @@
     <header class="shell top">
       <p class="mono small">copperplate <span class="dim">0.1.0</span></p>
       <nav class="mono small">
+        <a href="#gallery">Gallery</a>
         <a href="#metals">Metals</a>
         <a href="#playground">Playground</a>
         <a href="#usage">Usage</a>
@@ -31,8 +32,18 @@
       <section class="shell">
         <figure class="hero">
           <div id="hero" class="plate-host hero-plate"></div>
-          <figcaption class="mono small dim">Michelangelo, The Creation of Adam, detail, c. 1512</figcaption>
+          <figcaption class="mono small dim">Katsushika Hokusai, Under the Wave off Kanagawa, c. 1830 to 1832</figcaption>
         </figure>
+      </section>
+
+      <section class="shell" id="gallery">
+        <h2>Gallery</h2>
+        <p class="body">Thirty-eight public-domain works, engraved as they scroll into view: engravings, woodcuts, sculpture and coins, natural history plates, old maps and star charts, the surface of the Moon, and early photographs. Switch the metal for the whole wall, or narrow it to one kind of work.</p>
+        <div class="toolbar">
+          <div class="chips mono small" id="groups" role="group" aria-label="Show"></div>
+          <div class="chips mono small" id="wall-metal" role="group" aria-label="Metal"></div>
+        </div>
+        <div class="wall" id="wall"></div>
       </section>
 
       <section class="shell" id="metals">
@@ -52,11 +63,7 @@
               </select>
             </label>
             <label>image
-              <select name="src">
-                <option value="/img/verso-knight-day.webp">Dürer, the knight</option>
-                <option value="/img/creation-of-adam.jpg">Michelangelo, Adam</option>
-                <option value="/img/plate-colonnade-day.jpg">Robert, colonnade</option>
-              </select>
+              <select name="src" id="play-src"></select>
             </label>
             <label>relief <output name="reliefOut"></output><input type="range" name="relief" min="0" max="10" step="0.1" value="3.2" /></label>
             <label>shine <output name="shineOut"></output><input type="range" name="shine" min="0" max="3" step="0.05" value="1" /></label>
@@ -105,7 +112,10 @@ plate.destroy();</pre>
     </main>
 
     <footer class="shell foot small">
-      <p>The artworks are in the public domain: Albrecht Dürer, <i>Knight, Death and the Devil</i>, 1513; Michelangelo, <i>The Creation of Adam</i>, c. 1512, detail; Hubert Robert, <i>A Colonnade in Ruins</i>.</p>
+      <details class="credits">
+        <summary class="mono small">Credits: every work shown is in the public domain</summary>
+        <ol class="small" id="credits"></ol>
+      </details>
       <p class="mono dim">MIT licence. Only SVG filters; no canvas, no WebGL.</p>
     </footer>
 

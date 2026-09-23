@@ -1,8 +1,10 @@
 import { engrave, requestMotionLight, subscribeLamp, type EngraveOptions, type MaterialName } from 'copperplate';
 
-const KNIGHT = '/img/verso-knight-day.webp';
-const ADAM = '/img/creation-of-adam.jpg';
-const COLONNADE = '/img/plate-colonnade-day.jpg';
+import GALLERY from './gallery.json';
+
+type Work = (typeof GALLERY)[number];
+const bySlug = (slug: string): Work => GALLERY.find((w) => w.slug === slug)!;
+const credit = (w: Work) => `${w.artist}, ${w.title}, ${w.date}`;
 
 // ── theme ──
 const themeBtn = document.getElementById('theme')!;
@@ -21,16 +23,18 @@ applyTheme();
 
 // ── hero ──
 // A wide hero on a dense screen gets a finer surface than the default 800.
-engrave('#hero', { src: ADAM, alt: "Michelangelo's Creation of Adam, engraved in copper", position: '50% 40%', resolution: 1600 });
+const wave = bySlug('hokusai-great-wave');
+engrave('#hero', { src: wave.src, alt: `${credit(wave)}, engraved in copper`, position: '50% 45%', resolution: 1600 });
 
 // ── six metals ──
-const METALS: { name: MaterialName; src: string; position?: string }[] = [
-  { name: 'copper', src: KNIGHT },
-  { name: 'brass', src: ADAM, position: 'left' },
-  { name: 'silver', src: COLONNADE, position: '20% 50%' },
-  { name: 'steel', src: KNIGHT },
-  { name: 'gold', src: ADAM, position: 'right' },
-  { name: 'bronze', src: COLONNADE, position: '75% 50%' },
+// Each metal on the subject it flatters most.
+const METALS: { name: MaterialName; slug: string; position?: string }[] = [
+  { name: 'copper', slug: 'durer-knight' },
+  { name: 'brass', slug: 'pisanello-medal' },
+  { name: 'silver', slug: 'caligula-bust', position: '50% 30%' },
+  { name: 'steel', slug: 'piranesi-round-tower' },
+  { name: 'gold', slug: 'haeckel-cyrtoidea' },
+  { name: 'bronze', slug: 'greek-grave-stele', position: '50% 35%' },
 ];
 const grid = document.getElementById('metal-grid')!;
 for (const m of METALS) {
@@ -39,13 +43,96 @@ for (const m of METALS) {
   host.className = 'plate-host';
   const cap = document.createElement('figcaption');
   cap.className = 'mono small dim';
-  cap.innerHTML = `<span>${m.name}</span><span>material: '${m.name}'</span>`;
+  const w = bySlug(m.slug);
+  cap.innerHTML = `<span>${m.name}</span><span>${w.artist}</span>`;
   fig.append(host, cap);
   grid.append(fig);
-  engrave(host, { src: m.src, alt: '', material: m.name, position: m.position });
+  engrave(host, { src: w.src, alt: credit(w), material: m.name, position: m.position });
+}
+
+// ── gallery ──
+const GROUPS: Record<string, string> = {
+  all: 'All',
+  engravings: 'Engravings',
+  woodblock: 'Woodcuts',
+  relief: 'Sculpture & coins',
+  nature: 'Natural history',
+  maps: 'Maps & stars',
+  nasa: 'The Moon',
+  photo: 'Photographs',
+};
+const MATERIALS: MaterialName[] = ['copper', 'brass', 'silver', 'steel', 'gold', 'bronze'];
+let wallMetal: MaterialName = 'copper';
+const wall = document.getElementById('wall')!;
+const plates = new Map<string, ReturnType<typeof engrave>>();
+const figures = new Map<string, HTMLElement>();
+
+// Engraved only as they come near the screen: thirty-eight filters and their
+// images at once would be a heavy first paint for a page about lightness.
+const soon = new IntersectionObserver(
+  (entries) => {
+    for (const e of entries) {
+      if (!e.isIntersecting) continue;
+      const host = e.target as HTMLElement;
+      const w = bySlug(host.dataset.slug!);
+      plates.set(w.slug, engrave(host, { src: w.src, alt: credit(w), material: wallMetal, fit: 'contain' }));
+      soon.unobserve(host);
+    }
+  },
+  { rootMargin: '900px 0px' },
+);
+
+for (const w of GALLERY) {
+  const fig = document.createElement('figure');
+  fig.className = 'work';
+  fig.dataset.group = w.group;
+  const host = document.createElement('div');
+  host.className = 'plate-host';
+  host.dataset.slug = w.slug;
+  host.style.aspectRatio = `${w.width} / ${w.height}`;
+  const cap = document.createElement('figcaption');
+  cap.className = 'small';
+  cap.innerHTML = `<i>${w.title}</i><span class="mono dim">${w.artist}, ${w.date}</span>`;
+  fig.append(host, cap);
+  wall.append(fig);
+  figures.set(w.slug, fig);
+  soon.observe(host);
+}
+
+function chips(el: HTMLElement, items: [string, string][], current: string, pick: (v: string) => void) {
+  el.innerHTML = '';
+  for (const [value, label] of items) {
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'chip';
+    b.textContent = label;
+    b.setAttribute('aria-pressed', String(value === current));
+    b.addEventListener('click', () => {
+      el.querySelectorAll('button').forEach((x) => x.setAttribute('aria-pressed', String(x === b)));
+      pick(value);
+    });
+    el.append(b);
+  }
+}
+chips(document.getElementById('groups')!, Object.entries(GROUPS).map(([k, v]) => [k, `${v} ${k === 'all' ? GALLERY.length : GALLERY.filter((w) => w.group === k).length}`]), 'all', (g) => {
+  for (const [slug, fig] of figures) fig.hidden = g !== 'all' && bySlug(slug).group !== g;
+});
+chips(document.getElementById('wall-metal')!, MATERIALS.map((m) => [m, m]), wallMetal, (m) => {
+  wallMetal = m as MaterialName;
+  for (const plate of plates.values()) plate.update({ material: wallMetal });
+});
+
+// ── credits ──
+const credits = document.getElementById('credits')!;
+for (const w of GALLERY) {
+  const li = document.createElement('li');
+  li.innerHTML = `${w.artist}, <i>${w.title}</i>, ${w.date}. <a href="${w.page}" target="_blank" rel="noreferrer">${w.source}</a>, ${w.license}.`;
+  credits.append(li);
 }
 
 // ── playground ──
+const playSrc = document.getElementById('play-src') as HTMLSelectElement;
+for (const w of GALLERY) playSrc.add(new Option(`${w.artist}, ${w.title}`, w.src, w.slug === 'durer-knight', w.slug === 'durer-knight'));
 const form = document.getElementById('controls') as HTMLFormElement;
 const snippet = document.getElementById('snippet')!;
 const read = (): EngraveOptions => {
