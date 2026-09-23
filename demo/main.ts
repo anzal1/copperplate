@@ -158,7 +158,7 @@ function render() {
     (form.elements.namedItem(`${k}Out`) as HTMLOutputElement).value = String(o[k]);
   }
   const lines = [
-    `  src: '${o.src.split('/').pop()}',`,
+    `  src: '${o.src.startsWith('blob:') ? ownName : o.src.split('/').pop()}',`,
     `  alt: '...',`,
     o.material !== 'copper' && `  material: '${o.material}',`,
     o.relief !== 3.2 && `  relief: ${o.relief},`,
@@ -173,6 +173,52 @@ function render() {
 }
 form.addEventListener('input', render);
 render();
+
+// ── your own image ──
+// Read locally as an object URL: nothing is uploaded, and the plate treats
+// it like any other image.
+let ownUrl: string | null = null;
+let ownName = 'your-image.jpg';
+function useOwn(file: File | null | undefined) {
+  if (!file || !file.type.startsWith('image/')) return;
+  if (ownUrl) URL.revokeObjectURL(ownUrl);
+  ownUrl = URL.createObjectURL(file);
+  ownName = file.name || 'your-image.jpg';
+  let opt = playSrc.querySelector<HTMLOptionElement>('option[data-own]');
+  if (!opt) {
+    opt = new Option('', ownUrl);
+    opt.dataset.own = '1';
+    playSrc.prepend(opt);
+  }
+  opt.value = ownUrl;
+  opt.textContent = `Your image, ${ownName}`;
+  playSrc.value = ownUrl;
+  render();
+}
+const ownFile = document.getElementById('own-file') as HTMLInputElement;
+document.getElementById('own-btn')!.addEventListener('click', () => ownFile.click());
+ownFile.addEventListener('change', () => useOwn(ownFile.files?.[0]));
+const playHost = document.getElementById('play')!;
+for (const type of ['dragenter', 'dragover'] as const) {
+  playHost.addEventListener(type, (e) => {
+    if (![...(e.dataTransfer?.items ?? [])].some((i) => i.type.startsWith('image/'))) return;
+    e.preventDefault();
+    playHost.classList.add('dropping');
+  });
+}
+playHost.addEventListener('dragleave', () => playHost.classList.remove('dropping'));
+playHost.addEventListener('drop', (e) => {
+  e.preventDefault();
+  playHost.classList.remove('dropping');
+  useOwn(e.dataTransfer?.files[0]);
+  playHost.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+});
+addEventListener('paste', (e) => {
+  const file = [...(e.clipboardData?.files ?? [])].find((f) => f.type.startsWith('image/'));
+  if (!file) return;
+  useOwn(file);
+  document.getElementById('playground')!.scrollIntoView({ behavior: 'smooth' });
+});
 
 // ── status line ──
 const touch = matchMedia('(hover: none)').matches;

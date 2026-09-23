@@ -44,6 +44,7 @@
         <h1>Copperplate</h1>
         <p class="lede">Any image, printed as an engraved metal plate that catches the light. Its own brightness becomes the depth of the cut, and one lamp lights every plate on the page.</p>
         <p class="mono small dim" id="status">Move the pointer over the plates.</p>
+        <p class="mono small"><a href="#playground">Try it on your own image ↓</a></p>
         <button type="button" id="tilt" class="mono small button" hidden>Light by tilting the phone</button>
       </section>
 
@@ -73,7 +74,7 @@
       <section class="shell" id="playground">
         <h2>Playground</h2>
         <div class="play">
-          <div id="play" class="plate-host play-plate"></div>
+          <div id="play" class="plate-host play-plate"><span class="drop-hint mono small" aria-hidden="true">Drop it here</span></div>
           <form class="controls mono small" id="controls" onsubmit="return false">
             <label>material
               <select name="material">
@@ -83,6 +84,11 @@
             <label>image
               <select name="src" id="play-src"></select>
             </label>
+            <div class="own">
+              <input type="file" id="own-file" accept="image/*" hidden />
+              <button type="button" class="chip" id="own-btn">Use your own image</button>
+              <p class="dim">Or drop one on the plate, or paste it. It never leaves your browser.</p>
+            </div>
             <label>relief <output name="reliefOut"></output><input type="range" name="relief" min="0" max="10" step="0.1" value="3.2" /></label>
             <label>shine <output name="shineOut"></output><input type="range" name="shine" min="0" max="3" step="0.05" value="1" /></label>
             <label>sharpness <output name="sharpnessOut"></output><input type="range" name="sharpness" min="2" max="80" step="1" value="26" /></label>
