@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex" />
+    <title>copperplate share card</title>
+    <!-- The share image's composition, captured to public/og.jpg by scripts/og.mjs. -->
+    <link rel="stylesheet" href="./fonts.css" />
+    <link rel="stylesheet" href="./demo.css" />
+    <style>
+      body { margin: 0; background: #0a0a0a; }
+      .card { width: 1200px; height: 630px; display: grid; grid-template-columns: 620px 1fr; gap: 56px; align-items: center; padding: 0 64px; box-sizing: border-box; background: radial-gradient(120% 90% at 25% 45%, #1b1410 0%, #0a0a0a 72%); color: #f5f1ea; }
+      .plate { width: 620px; height: 460px; }
+      .eyebrow { font: 500 14px/1 'JetBrains Mono', monospace; letter-spacing: .22em; text-transform: uppercase; color: #8a7f72; margin: 0; }
+      h1 { font: 400 92px/1 Fraunces, Georgia, serif; letter-spacing: -.035em; margin: 22px 0 0; }
+      .line { font: italic 30px/1.25 Newsreader, Georgia, serif; color: #c97a4e; margin: 16px 0 0; }
+      .facts { font: 400 21px/1.45 Newsreader, Georgia, serif; color: #b9ada0; margin: 22px 0 0; max-width: 26ch; }
+      .install { display: inline-block; font: 500 18px/1 'JetBrains Mono', monospace; color: #f5f1ea; margin: 34px 0 0; border: 1px solid #3a322b; border-radius: 6px; padding: 12px 16px; }
+      .url { font: 500 15px/1 'JetBrains Mono', monospace; letter-spacing: .06em; color: #8a7f72; margin: 18px 0 0; }
+    </style>
+  </head>
+  <body>
+    <div class="card">
+      <div id="plate" class="plate plate-host"></div>
+      <div>
+        <p class="eyebrow">Open source · MIT</p>
+        <h1>copperplate</h1>
+        <p class="line">Any image, engraved in light.</p>
+        <p class="facts">One lamp lights every plate on the page. SVG filters only, about 6 kB.</p>
+        <p class="install">npm i copperplate</p>
+        <p class="url">copperplate.anzalabidi.dev</p>
+      </div>
+    </div>
+    <script type="module">
+      import { engrave } from 'copperplate';
+      engrave('#plate', { src: '/gallery/hokusai-great-wave.webp', alt: '', position: '40% 50%', resolution: 1600 });
+    </script>
+  </body>
+</html>

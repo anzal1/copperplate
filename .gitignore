@@ -3,3 +3,6 @@ dist/
 demo/dist/
 *.log
 .DS_Store
+
+# Rendered demo clips (scripts/video.mjs)
+copperplate-demo-*.mp4
