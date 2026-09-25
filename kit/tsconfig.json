@@ -9,5 +9,5 @@
       "copperplate": ["../src/index.ts"]
     }
   },
-  "include": ["components", "env.d.ts", "../demo/kit.tsx", "../demo/dir-*.tsx"]
+  "include": ["components", "env.d.ts", "../demo/kit.tsx", "../demo/dir-*.tsx", "../demo/piece.tsx"]
 }
