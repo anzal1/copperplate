@@ -1,4 +1,5 @@
 import { forwardRef, useRef, type HTMLAttributes } from 'react';
+import { useTilt } from './motion';
 import { cx, mergeRefs, useLit, type Metal } from './utils';
 
 export type CardProps = HTMLAttributes<HTMLDivElement> & {
@@ -9,7 +10,10 @@ export type CardProps = HTMLAttributes<HTMLDivElement> & {
 
 export const Card = forwardRef<HTMLDivElement, CardProps>(function Card({ variant = 'plaque', metal = 'copper', className, ...props }, ref) {
   const local = useRef<HTMLDivElement>(null);
+  const tilt = useRef<HTMLDivElement>(null);
   useLit(local);
+  // Only the metal card is an object you might pick up; paper cards stay flat.
+  useTilt(variant === 'struck' ? local : tilt, 4);
   return (
     <div
       ref={mergeRefs(ref, local)}

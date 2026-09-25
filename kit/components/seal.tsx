@@ -1,5 +1,7 @@
-import { useId } from 'react';
+import { useId, useRef } from 'react';
 import { Relief } from './relief';
+import { useTilt } from './motion';
+import { playSound } from './sound';
 import type { Metal } from './utils';
 
 /** 72 beads round the rim, drawn as one round-capped dotted stroke. */
@@ -12,8 +14,11 @@ const BEAD_GAP = (2 * Math.PI * 88) / 72;
  */
 export function Seal({ initial, legend, metal = 'copper', className, label }: { initial: string; legend: string; metal?: Metal; className?: string; label?: string }) {
   const id = useId().replace(/[^a-zA-Z0-9]/g, '');
+  const hold = useRef<HTMLSpanElement>(null);
+  useTilt(hold, 14);
   return (
-    <Relief width={200} height={200} metal={metal} className={className} label={label ?? `${initial}, ${legend}`} style={{ display: 'block' }}>
+    <span ref={hold} className={['cp-medal', className].filter(Boolean).join(' ')} onPointerDown={() => playSound('seal')}>
+    <Relief width={200} height={200} metal={metal} sweep label={label ?? `${initial}, ${legend}`} style={{ display: 'block', width: '100%', height: '100%' }}>
       <defs>
         <path id={`rim-${id}`} d="M100,100 m-72,0 a72,72 0 1,1 144,0 a72,72 0 1,1 -144,0" />
       </defs>
@@ -28,5 +33,6 @@ export function Seal({ initial, legend, metal = 'copper', className, label }: { 
       <circle cx="100" cy="100" r="61" fill="none" stroke="#e2e2e2" strokeWidth="1.8" />
       <text x="100" y="124" textAnchor="middle" fill="#fafafa" style={{ fontFamily: 'var(--cp-font-display)', fontSize: 72, fontWeight: 480 }}>{initial}</text>
     </Relief>
+    </span>
   );
 }

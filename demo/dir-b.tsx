@@ -27,13 +27,14 @@ function App() {
         .b-hero { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 40px; align-items: center; padding: 30px 28px 50px; }
         .b-hero p { font: 20px/1.45 var(--cp-font-body); color: var(--cp-ink-2); max-width: 34ch; margin: 18px 0 26px; }
         .b-bench { display: grid; grid-template-columns: repeat(6, 1fr); grid-auto-rows: 170px; gap: 14px; padding: 0 28px 120px; }
-        .b-cell { position: relative; display: grid; place-items: center; border-radius: 4px; background: radial-gradient(120% 90% at 50% 0%, #1c1916, #110f0d); border: 1px solid #221f1b; box-shadow: inset 0 1px 0 rgb(255 240 220 / .04), 0 20px 40px -30px #000; cursor: pointer; overflow: hidden; transition: border-color .3s var(--cp-ease), transform .4s var(--cp-ease); }
+        .b-cell { position: relative; display: grid; place-items: center; border-radius: 4px; background: radial-gradient(120% 90% at 50% 0%, #1c1916, #110f0d); border: 1px solid #221f1b; box-shadow: inset 0 1px 0 rgb(255 240 220 / .04), 0 20px 40px -30px #000; overflow: visible; transition: border-color .3s var(--cp-ease), transform .4s var(--cp-ease); }
         .b-cell:hover { border-color: #3a332b; }
         .b-cell[data-big] { grid-column: span 2; grid-row: span 2; }
         .b-cell .b-name { position: absolute; left: 14px; bottom: 12px; }
         .b-cell .b-demo { transform: scale(.9); }
         .b-cell[data-big] .b-demo { transform: scale(1.25); }
-        .b-cell .b-demo * { pointer-events: none; }
+        .b-inspect { position: absolute; right: 10px; top: 10px; opacity: 0; transition: opacity .3s var(--cp-ease); }
+        .b-cell:hover .b-inspect, .b-cell:focus-within .b-inspect { opacity: 1; }
         .b-drawer { position: fixed; top: 12px; right: 12px; bottom: 12px; width: min(460px, calc(100vw - 24px)); z-index: 40; padding: 26px; background: #14120f; border: 1px solid #2c2823; border-radius: 6px; box-shadow: 0 40px 120px -20px #000; transform: translateX(110%); transition: transform .5s var(--cp-ease); overflow: auto; }
         .b-drawer[data-open] { transform: none; }
         .b-drawer h2 { font: 400 38px/1 var(--cp-font-display); margin: 10px 0 0; }
@@ -59,9 +60,10 @@ function App() {
       </section>
       <section className="b-bench">
         {ENTRIES.map((x) => { const D = x.demo; return (
-          <div key={x.slug} className="b-cell" data-big={BIG.has(x.slug) || undefined} onClick={() => setOpen(x.slug)}>
+          <div key={x.slug} className="b-cell" data-big={BIG.has(x.slug) || undefined}>
             <div className="b-demo"><D /></div>
             <span className="cp-label b-name">{x.name}</span>
+            <Button className="b-inspect" size="sm" variant="engraved" onClick={() => setOpen(x.slug)}>Inspect</Button>
           </div>
         ); })}
       </section>

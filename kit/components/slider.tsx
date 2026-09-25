@@ -1,4 +1,5 @@
 import { forwardRef, useRef, useState, type InputHTMLAttributes } from 'react';
+import { playSound } from './sound';
 import { cx, useLit, type Metal } from './utils';
 
 export type SliderProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | 'value' | 'defaultValue' | 'onChange'> & {
@@ -9,6 +10,8 @@ export type SliderProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | '
   step?: number;
   onValueChange?: (v: number) => void;
   metal?: Metal;
+  /** How the value reads on the tag that rides above the disc while you drag. */
+  format?: (v: number) => string;
 };
 
 /**
@@ -17,7 +20,7 @@ export type SliderProps = Omit<InputHTMLAttributes<HTMLInputElement>, 'type' | '
  * readers and touch all work as they do on any range.
  */
 export const Slider = forwardRef<HTMLInputElement, SliderProps>(function Slider(
-  { value, defaultValue = 50, min = 0, max = 100, step = 1, onValueChange, metal = 'copper', className, style, ...props },
+  { value, defaultValue = 50, min = 0, max = 100, step = 1, onValueChange, metal = 'copper', format = (n: number) => String(n), className, style, ...props },
   ref,
 ) {
   const [own, setOwn] = useState(defaultValue);
@@ -32,6 +35,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(function Slider(
         <div className="cp-slider-fill cp-face" />
       </div>
       <div className="cp-slider-thumb cp-face" aria-hidden="true" />
+      <div className="cp-slider-tag cp-face cp-stamped" aria-hidden="true">{format(v)}</div>
       <input
         ref={ref}
         type="range"
@@ -43,6 +47,7 @@ export const Slider = forwardRef<HTMLInputElement, SliderProps>(function Slider(
           const n = Number(e.target.value);
           if (value === undefined) setOwn(n);
           onValueChange?.(n);
+          playSound('tick');
         }}
         {...props}
       />

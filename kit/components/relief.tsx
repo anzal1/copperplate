@@ -1,6 +1,7 @@
 import { useEffect, useId, useRef, type ReactNode } from 'react';
 import { followLamp, MATERIALS } from 'copperplate/react';
 import { toneMatrix } from 'copperplate';
+import { onFirstSight, prefersReducedMotion } from './motion';
 import type { Metal } from './utils';
 
 /**
@@ -34,6 +35,12 @@ export type ReliefProps = {
   shine?: number;
   /** How high the lamp sits over the drawing, in drawing units. Lower is a tighter, brighter glint. */
   lampHeight?: number;
+  /**
+   * The first time it comes into view, carry a light across it from left to
+   * right before handing it to the page's lamp: the moment a plate is first
+   * turned to the window.
+   */
+  sweep?: boolean;
   /** Accessible name. Leave empty for decoration. */
   label?: string;
   className?: string;
@@ -41,19 +48,55 @@ export type ReliefProps = {
   children: ReactNode;
 };
 
-export function Relief({ width, height, metal = 'copper', depth = 4, soft = 0.7, shine = 1, lampHeight, label, className, style, children }: ReliefProps) {
+export function Relief({ width, height, metal = 'copper', depth = 4, soft = 0.7, shine = 1, lampHeight, sweep = false, label, className, style, children }: ReliefProps) {
   const uid = useId().replace(/[^a-zA-Z0-9]/g, '');
   const svg = useRef<SVGSVGElement>(null);
   const spot = useRef<SVGFEPointLightElement>(null);
   const tone = TONES[metal];
 
   useEffect(() => {
-    if (!svg.current) return;
-    return followLamp(svg.current, (x, y, r) => {
-      spot.current?.setAttribute('x', ((x / (r.width || 1)) * width).toFixed(1));
-      spot.current?.setAttribute('y', ((y / (r.height || 1)) * height).toFixed(1));
+    const el = svg.current;
+    if (!el) return;
+    const set = (x: number, y: number) => {
+      spot.current?.setAttribute('x', x.toFixed(1));
+      spot.current?.setAttribute('y', y.toFixed(1));
+    };
+    let sweeping = false;
+    let lamp = { x: width * 0.3, y: height * 0.2 };
+    let raf = 0;
+    const stop = followLamp(el, (x, y, r) => {
+      lamp = { x: (x / (r.width || 1)) * width, y: (y / (r.height || 1)) * height };
+      if (!sweeping) set(lamp.x, lamp.y);
     });
-  }, [width, height]);
+    const unsee = sweep && !prefersReducedMotion()
+      ? onFirstSight(el, () => {
+          sweeping = true;
+          const t0 = performance.now();
+          const D = 1500;
+          const step = (now: number) => {
+            const p = Math.min(1, (now - t0) / D);
+            const e = p < 0.5 ? 4 * p * p * p : 1 - (-2 * p + 2) ** 3 / 2;
+            if (p < 0.82) {
+              set(-0.25 * width + e * 1.5 * width, height * (0.05 + 0.1 * Math.sin(Math.PI * e)));
+              raf = requestAnimationFrame(step);
+            } else {
+              // Ease the last stretch onto wherever the real lamp is.
+              const k = (p - 0.82) / 0.18;
+              const sx = -0.25 * width + e * 1.5 * width;
+              set(sx + (lamp.x - sx) * k, height * 0.1 + (lamp.y - height * 0.1) * k);
+              if (p < 1) raf = requestAnimationFrame(step);
+              else sweeping = false;
+            }
+          };
+          raf = requestAnimationFrame(step);
+        })
+      : () => {};
+    return () => {
+      stop();
+      unsee();
+      cancelAnimationFrame(raf);
+    };
+  }, [width, height, sweep]);
 
   return (
     <svg

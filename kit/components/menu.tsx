@@ -56,7 +56,9 @@ export function Menu({ trigger, children, align = 'start', metal = 'copper' }: {
         })}
         {open && (
           <div ref={list} id={id} role="menu" data-align={align} data-metal={metal} className="cp-menu-plate">
-            {children}
+            {Array.isArray(children)
+              ? children.map((c, i) => <span key={i} className="cp-menu-row" style={{ ['--cp-i' as string]: i }}>{c}</span>)
+              : children}
           </div>
         )}
       </span>

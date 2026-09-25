@@ -1,4 +1,6 @@
 import { createContext, useContext, useId, useLayoutEffect, useRef, useState, type HTMLAttributes, type KeyboardEvent, type ReactNode } from 'react';
+import { playSound } from './sound';
+import { prefersReducedMotion } from './motion';
 import { cx, useLit, type Metal } from './utils';
 
 type Ctx = { value: string; set: (v: string) => void; base: string };
@@ -27,6 +29,7 @@ export function TabsList({ metal = 'copper', className, children, ...props }: HT
   const t = useContext(TabsCtx)!;
   const list = useRef<HTMLDivElement>(null);
   const plate = useRef<HTMLSpanElement>(null);
+  const was = useRef<{ left: number; width: number } | null>(null);
   useLit(list);
 
   useLayoutEffect(() => {
@@ -40,6 +43,25 @@ export function TabsList({ metal = 'copper', className, children, ...props }: HT
       p.style.width = `${on.offsetWidth}px`;
       p.style.setProperty('--cp-px', `${on.offsetLeft}px`);
     };
+    const on = l.querySelector<HTMLElement>('[aria-selected="true"]');
+    const prev = was.current;
+    if (on && prev && prev.left !== on.offsetLeft && !prefersReducedMotion()) {
+      // The plate is dragged, not teleported: its leading edge runs ahead,
+      // stretching it across both tabs, then the trailing edge catches up.
+      const a = prev;
+      const b = { left: on.offsetLeft, width: on.offsetWidth };
+      const span = { left: Math.min(a.left, b.left), width: Math.max(a.left + a.width, b.left + b.width) - Math.min(a.left, b.left) };
+      p.style.transition = 'none';
+      p.animate(
+        [
+          { left: `${a.left}px`, width: `${a.width}px` },
+          { left: `${span.left}px`, width: `${span.width}px`, offset: 0.45 },
+          { left: `${b.left}px`, width: `${b.width}px` },
+        ],
+        { duration: 460, easing: 'cubic-bezier(0.22, 1, 0.36, 1)' },
+      );
+    }
+    if (on) was.current = { left: on.offsetLeft, width: on.offsetWidth };
     place();
     const ro = new ResizeObserver(place);
     ro.observe(l);
@@ -78,7 +100,7 @@ export function Tab({ value, className, children, ...props }: HTMLAttributes<HTM
       aria-controls={`${t.base}-panel-${value}`}
       tabIndex={on ? 0 : -1}
       className={cx('cp-tab', className)}
-      onClick={() => t.set(value)}
+      onClick={() => { if (!on) playSound('tick'); t.set(value); }}
       {...props}
     >
       {children}

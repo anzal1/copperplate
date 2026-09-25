@@ -1,4 +1,5 @@
 import { createContext, forwardRef, useContext, useId, useRef, type HTMLAttributes, type InputHTMLAttributes, type ReactNode } from 'react';
+import { playSound } from './sound';
 import { cx, useLit, type Metal } from './utils';
 
 type Group = { name: string; value?: string; onValueChange?: (v: string) => void; metal: Metal };
@@ -39,7 +40,10 @@ export const Radio = forwardRef<HTMLInputElement, RadioProps>(function Radio({ v
         {...(controlled ? { checked: g!.value === value } : { defaultChecked: g?.value === value })}
         onChange={(e) => {
           onChange?.(e);
-          if (e.target.checked) g?.onValueChange?.(value);
+          if (e.target.checked) {
+            g?.onValueChange?.(value);
+            playSound('strike');
+          }
         }}
         {...props}
       />

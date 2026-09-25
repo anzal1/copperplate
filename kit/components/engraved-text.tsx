@@ -14,10 +14,13 @@ export function EngravedText({
   weight = 480,
   italic = false,
   font = 'var(--cp-font-display)',
+  sweep = true,
   className,
   style,
 }: {
   children: string;
+  /** Carry a light across the letters the first time they come into view. */
+  sweep?: boolean;
   metal?: Metal;
   as?: 'span' | 'h1' | 'h2' | 'h3' | 'p';
   weight?: number;
@@ -43,7 +46,7 @@ export function EngravedText({
 
   return (
     <Tag className={['cp-engraved-text', className].filter(Boolean).join(' ')} style={{ display: Tag === 'span' ? 'inline-block' : 'block', width: 'fit-content', lineHeight: 1, ...style }} aria-label={children}>
-      <Relief width={box.w} height={box.h} metal={metal} depth={7} soft={1.6} shine={1.8} lampHeight={box.h * 1.4} style={{ height: '1.28em', width: 'auto', display: 'block', overflow: 'visible' }}>
+      <Relief width={box.w} height={box.h} metal={metal} depth={7} soft={1.6} shine={1.8} lampHeight={box.h * 1.4} sweep={sweep} style={{ height: '1.28em', width: 'auto', display: 'block', overflow: 'visible' }}>
         <defs>
           {/* Lighter at the top of each letter, darker at the foot: the face
               of a cut letter, before the lamp adds its glint. */}

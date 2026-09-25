@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { Engraving } from 'copperplate/react';
 import { Coin } from './coin';
+import { useTilt } from './motion';
 import { cx, useLit, type Metal } from './utils';
 
 /**
@@ -10,6 +11,7 @@ import { cx, useLit, type Metal } from './utils';
 export function Avatar({ src, name, metal = 'copper', size = 48, className }: { src?: string; name: string; metal?: Metal; size?: number; className?: string }) {
   const rim = useRef<HTMLSpanElement>(null);
   useLit(rim);
+  useTilt(rim, 12);
   const initials = name.split(/\s+/).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
   if (!src) return <Coin text={initials} metal={metal} size={size} label={name} className={className} />;
   const material = metal === 'verdigris' || metal === 'oxide' ? 'bronze' : metal;

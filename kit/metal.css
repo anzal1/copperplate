@@ -200,14 +200,20 @@
     0 1px 0 var(--cp-cut-light);
 }
 
-/* The burnished edge: focus, drawn as light catching a polished rim. */
+/* The burnished edge: focus, drawn as light catching a polished rim. It
+   flares as it arrives, then settles. */
 .cp-focus:focus-visible,
 .cp-focus-within:focus-within:has(:focus-visible) {
   outline: none;
+  animation: cp-burnish 0.6s var(--cp-ease);
   box-shadow:
     0 0 0 2px var(--cp-paper),
     0 0 0 3.5px var(--cp-accent),
     0 0 14px 2px color-mix(in srgb, var(--cp-accent) 40%, transparent);
+}
+
+@keyframes cp-burnish {
+  from { box-shadow: 0 0 0 2px var(--cp-paper), 0 0 0 6px color-mix(in srgb, var(--cp-accent) 60%, transparent), 0 0 26px 8px color-mix(in srgb, var(--cp-accent) 55%, transparent); }
 }
 
 .cp-label {
@@ -241,14 +247,43 @@
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
+  /* Released, a button springs back past level and settles; pressed, it goes
+     down at once. The long ease is on the way up. */
   transition:
-    transform 0.16s var(--cp-ease),
-    box-shadow 0.16s var(--cp-ease),
+    transform 0.55s cubic-bezier(0.3, 1.9, 0.45, 1),
+    box-shadow 0.25s var(--cp-ease),
     filter 0.3s var(--cp-ease),
     color 0.3s var(--cp-ease),
     border-color 0.3s var(--cp-ease);
 }
-.cp-button svg { width: 1.05em; height: 1.05em; flex-shrink: 0; }
+.cp-button:active:not(:disabled) { transition-duration: 0.06s, 0.06s, 0.3s, 0.3s, 0.3s; }
+.cp-button svg { transition: translate 0.45s cubic-bezier(0.3, 1.6, 0.45, 1); }
+.cp-button:hover svg:last-child:not(:first-child) { translate: 2px 0; }
+/* The strike: light thrown out from where the press landed. */
+.cp-button::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  opacity: 0;
+  transform-origin: var(--cp-sx, 50%) var(--cp-sy, 50%);
+  background: radial-gradient(circle at var(--cp-sx, 50%) var(--cp-sy, 50%), rgb(255 252 244 / 0.95), rgb(var(--cp-m-sheen, 255 236 212) / 0.4) 16%, transparent 42%);
+  mix-blend-mode: overlay;
+}
+.cp-button[data-variant='struck'] { overflow: hidden; }
+.cp-button[data-strike]::after { animation: cp-strike 0.6s var(--cp-ease); }
+.cp-button[data-variant='engraved']::after { inset: 3px; border: 1px solid var(--cp-accent); background: none; mix-blend-mode: normal; }
+.cp-button[data-variant='engraved'][data-strike]::after { animation: cp-ring 0.5s var(--cp-ease); }
+.cp-button[data-variant='plain']::after { display: none; }
+@keyframes cp-strike {
+  0% { opacity: 1; transform: scale(0.35); }
+  100% { opacity: 0; transform: scale(2.2); }
+}
+@keyframes cp-ring {
+  0% { opacity: 0.9; transform: scale(1); }
+  100% { opacity: 0; transform: scale(1.06, 1.25); }
+} { width: 1.05em; height: 1.05em; flex-shrink: 0; }
 .cp-button[data-size='sm'] { --cp-bh: 2rem; --cp-bpx: 0.85rem; font-size: 0.6875rem; }
 .cp-button[data-size='lg'] { --cp-bh: 3rem; --cp-bpx: 1.5rem; font-size: 0.8125rem; }
 .cp-button[data-size='icon'] { --cp-bpx: 0; width: var(--cp-bh); }
@@ -261,9 +296,12 @@
     0 1px 0 rgb(var(--cp-m-sheen) / 0.5),
     0 -0.5px 0 rgb(0 0 0 / 0.2);
 }
-.cp-button[data-variant='struck']:hover { filter: brightness(1.06) saturate(1.04); }
+.cp-button[data-variant='struck']:hover {
+  filter: brightness(1.07) saturate(1.05);
+  box-shadow: var(--cp-face-shadow), 0 6px 16px -8px var(--cp-drop);
+}
 .cp-button[data-variant='struck']:active:not(:disabled) {
-  transform: translateY(1px);
+  transform: translateY(1px) scale(0.985);
   box-shadow:
     inset 0 2px 5px rgb(0 0 0 / 0.38),
     inset 0 -1px 0 rgb(var(--cp-m-sheen) / 0.25),
@@ -290,7 +328,7 @@
     inset 0 0 0 3px var(--cp-paper),
     inset 0 0 0 4px color-mix(in srgb, var(--cp-accent) 60%, transparent);
 }
-.cp-button[data-variant='engraved']:active:not(:disabled) { transform: translateY(1px); }
+.cp-button[data-variant='engraved']:active:not(:disabled) { transform: translateY(1px) scale(0.985); }
 .cp-button[data-variant='engraved']:disabled { opacity: 0.45; }
 
 /* Plain: a label and a hairline that draws in copper on hover. */
@@ -411,8 +449,31 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
   transition: opacity 0.12s linear, transform 0.32s var(--cp-ease-strike);
 }
 .cp-check-tile svg { width: 72%; height: 72%; }
-.cp-check-tile svg path { stroke: var(--cp-m-ink); filter: drop-shadow(0 0.75px 0 rgb(var(--cp-m-sheen) / 0.55)); }
+.cp-check-tile svg path {
+  stroke: var(--cp-m-ink);
+  filter: drop-shadow(0 0.75px 0 rgb(var(--cp-m-sheen) / 0.55));
+  /* The tick is stamped a beat after the tile lands, drawn in one stroke. */
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  transition: stroke-dashoffset 0.28s 0.12s var(--cp-ease);
+}
 .cp-check input:checked + .cp-check-box .cp-check-tile { opacity: 1; transform: scale(1); }
+.cp-check input:checked + .cp-check-box .cp-check-tile svg path { stroke-dashoffset: 0; }
+.cp-check-box::after {
+  /* The impact: a ring of light off the socket as the tile is struck in. */
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: inherit;
+  border: 1px solid var(--cp-accent);
+  opacity: 0;
+  pointer-events: none;
+}
+.cp-check input:checked + .cp-check-box::after { animation: cp-impact 0.5s 0.08s var(--cp-ease); }
+@keyframes cp-impact {
+  0% { opacity: 0.8; transform: scale(0.9); }
+  100% { opacity: 0; transform: scale(1.6); }
+}
 .cp-check input:focus-visible + .cp-check-box { box-shadow: 0 0 0 2px var(--cp-paper), 0 0 0 3.5px var(--cp-accent), 0 0 12px 2px color-mix(in srgb, var(--cp-accent) 40%, transparent); }
 .cp-check input:disabled + .cp-check-box { opacity: 0.5; }
 .cp-check:has(input:disabled) { cursor: not-allowed; color: var(--cp-ink-3); }
@@ -471,7 +532,7 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
   width: var(--cp-thumb);
   height: var(--cp-thumb);
   border-radius: 999px;
-  transition: transform 0.38s var(--cp-ease-strike), --cp-travel 0.38s var(--cp-ease-strike);
+  transition: translate 0.42s var(--cp-ease-strike), --cp-travel 0.42s var(--cp-ease-strike), box-shadow 0.3s var(--cp-ease);
   /* The lamp is measured on the switch; the pool is shifted by the bolt's
      travel, so the highlight stays where the light is as the bolt slides. */
   --cp-lx: calc(var(--cp-slx, 30%) - 3px - var(--cp-travel));
@@ -484,7 +545,14 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
   background: repeating-linear-gradient(90deg, rgb(0 0 0 / 0.28) 0 1px, rgb(var(--cp-m-sheen) / 0.45) 1px 2px, transparent 2px 3.5px);
   border-radius: 1px;
 }
-.cp-switch[aria-checked='true'] .cp-switch-thumb { --cp-travel: calc(var(--cp-sw) - var(--cp-thumb) - 6px); transform: translateX(var(--cp-travel)); }
+.cp-switch[aria-checked='true'] .cp-switch-thumb { --cp-travel: calc(var(--cp-sw) - var(--cp-thumb) - 6px); translate: var(--cp-travel) 0; }
+/* In flight the bolt stretches along the slot and squashes, then lands. Only
+   after a real toggle, so nothing wobbles on page load. */
+.cp-switch[data-moved][aria-checked='true'] .cp-switch-thumb { animation: cp-bolt-on 0.42s var(--cp-ease); }
+.cp-switch[data-moved][aria-checked='false'] .cp-switch-thumb { animation: cp-bolt-off 0.42s var(--cp-ease); }
+@keyframes cp-bolt-on { 0% { scale: 1 1; transform-origin: 0 50%; } 35% { scale: 1.32 0.9; } 100% { scale: 1 1; } }
+@keyframes cp-bolt-off { 0% { scale: 1 1; transform-origin: 100% 50%; } 35% { scale: 1.32 0.9; } 100% { scale: 1 1; } }
+.cp-switch:active .cp-switch-thumb { box-shadow: var(--cp-face-shadow), 0 0 0 3px color-mix(in srgb, var(--cp-accent) 18%, transparent); }
 .cp-switch[aria-checked='true'] .cp-switch-inlay { clip-path: inset(0 0 0 0 round 999px); }
 .cp-switch:disabled { opacity: 0.5; cursor: not-allowed; }
 .cp-switch:focus-visible { outline: none; box-shadow: inset 0 1px 2px var(--cp-cut-dark), 0 0 0 2px var(--cp-paper), 0 0 0 3.5px var(--cp-accent), 0 0 12px 2px color-mix(in srgb, var(--cp-accent) 40%, transparent); }
@@ -539,7 +607,7 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
   height: 1.4rem;
   border-radius: 50%;
   pointer-events: none;
-  transition: transform 0.2s var(--cp-ease);
+  transition: transform 0.35s var(--cp-ease-strike), box-shadow 0.3s var(--cp-ease);
   --cp-lx: calc(var(--cp-slx, 30%) - var(--cp-v) * (var(--cp-w, 0px) - 1.4rem));
   --cp-ly: calc(var(--cp-sly, -30%) - 0.6rem);
 }
@@ -569,7 +637,41 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
   cursor: grab;
 }
 .cp-slider input:active { cursor: grabbing; }
-.cp-slider:has(input:active) .cp-slider-thumb { transform: scale(1.08); }
+.cp-slider:has(input:active) .cp-slider-thumb { transform: scale(1.12); box-shadow: var(--cp-face-shadow), 0 6px 14px -4px var(--cp-drop); }
+/* The scale lights up round the disc, as if the lamp were carried with it. */
+.cp-slider-scale::before {
+  content: '';
+  position: absolute;
+  inset: -2px 0 0;
+  background: radial-gradient(3.2rem 100% at calc(var(--cp-v) * (100% - 1.4rem) + 0.7rem) 60%, var(--cp-accent), transparent);
+  -webkit-mask: repeating-linear-gradient(90deg, #000 0 1px, transparent 1px calc(2% - 0.02px));
+  mask: repeating-linear-gradient(90deg, #000 0 1px, transparent 1px calc(2% - 0.02px));
+  opacity: 0.55;
+  transition: opacity 0.3s var(--cp-ease);
+}
+.cp-slider:has(input:active) .cp-slider-scale::before { opacity: 1; }
+/* A struck tag with the value, riding above the disc while you drag. */
+.cp-slider-tag {
+  position: absolute;
+  bottom: calc(100% + 2px);
+  left: calc(var(--cp-v) * (100% - 1.4rem) + 0.7rem);
+  translate: -50% 6px;
+  scale: 0.9;
+  padding: 0.25rem 0.45rem;
+  border-radius: var(--cp-radius);
+  font-family: var(--cp-font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s var(--cp-ease), translate 0.35s var(--cp-ease-strike), scale 0.35s var(--cp-ease-strike);
+  --cp-pool: 6rem;
+}
+.cp-slider:has(input:active) .cp-slider-tag,
+.cp-slider:has(input:focus-visible) .cp-slider-tag { opacity: 1; translate: -50% 0; scale: 1; }
 .cp-slider:has(input:focus-visible) .cp-slider-thumb { box-shadow: 0 0 0 2px var(--cp-paper), 0 0 0 3.5px var(--cp-accent), 0 0 12px 2px color-mix(in srgb, var(--cp-accent) 40%, transparent); }
 .cp-slider:has(input:disabled) { opacity: 0.5; }
 
@@ -741,6 +843,18 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
   transition: width 0.6s var(--cp-ease);
   box-shadow: inset 0 1px 0 rgb(var(--cp-m-sheen) / 0.45), inset 0 -1px 1px rgb(0 0 0 / 0.3) !important;
 }
+.cp-progress-fill { overflow: hidden; }
+.cp-progress-fill::after {
+  /* Light running along the poured metal while it fills. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 35%, rgb(var(--cp-m-sheen) / 0.7) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: cp-pour 2.6s linear infinite;
+  mix-blend-mode: soft-light;
+}
+@keyframes cp-pour { from { background-position: 150% 0; } to { background-position: -100% 0; } }
 .cp-progress[data-indeterminate='true'] .cp-progress-fill {
   width: 35%;
   animation: cp-run 1.6s var(--cp-ease) infinite;
@@ -791,9 +905,19 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
 }
 .cp-tip-anchor[data-side='bottom'] .cp-tip { bottom: auto; top: calc(100% + 10px); translate: -50% -4px; }
 .cp-tip-anchor[data-side='bottom'] .cp-tip::after { top: auto; bottom: 100%; translate: -50% 4px; background: var(--cp-m-hi); border: 0; border-left: 1px solid var(--cp-m-edge); border-top: 1px solid var(--cp-m-edge); }
+/* It hangs off what it names, so it arrives with a small swing and settles. */
+.cp-tip { transform-origin: 50% calc(100% + 8px); }
+.cp-tip-anchor[data-side='bottom'] .cp-tip { transform-origin: 50% -8px; }
 .cp-tip-anchor:hover .cp-tip,
-.cp-tip-anchor:focus-within .cp-tip { opacity: 1; translate: -50% 0; transition-delay: 0.25s; }
-.cp-tip-anchor:focus-within .cp-tip { transition-delay: 0s; }
+.cp-tip-anchor:focus-within .cp-tip { opacity: 1; translate: -50% 0; transition-delay: 0.22s; animation: cp-swing 0.9s 0.22s var(--cp-ease) both; }
+.cp-tip-anchor:focus-within .cp-tip { transition-delay: 0s; animation-delay: 0s; }
+@keyframes cp-swing {
+  0% { rotate: -9deg; }
+  30% { rotate: 5deg; }
+  55% { rotate: -2.5deg; }
+  78% { rotate: 1deg; }
+  100% { rotate: 0deg; }
+}
 
 /* ── dialog: a plate laid over the page ──────────────────────────────── */
 
@@ -824,9 +948,16 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
     0 12px 24px -16px var(--cp-drop);
 }
 .cp-dialog-footer { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.5rem; flex-wrap: wrap; }
-.cp-dialog[open] .cp-dialog-plate { animation: cp-lay 0.42s var(--cp-ease); }
-.cp-dialog[open]::backdrop { animation: cp-fade 0.3s var(--cp-ease); }
-@keyframes cp-lay { from { opacity: 0; transform: translateY(10px) scale(0.985); } }
+/* Laid down onto the page: it comes in from just above, a touch large, with
+   a long soft shadow that tightens as it lands. */
+.cp-dialog[open] .cp-dialog-plate { animation: cp-lay 0.55s var(--cp-ease); }
+.cp-dialog[open]::backdrop { animation: cp-fade 0.35s var(--cp-ease); }
+.cp-dialog[data-closing] .cp-dialog-plate { animation: cp-lift 0.3s var(--cp-ease) forwards; }
+.cp-dialog[data-closing]::backdrop { animation: cp-fade 0.3s var(--cp-ease) reverse forwards; }
+@keyframes cp-lay {
+  from { opacity: 0; transform: translateY(-14px) scale(1.025); box-shadow: 0 60px 120px -30px var(--cp-drop); }
+}
+@keyframes cp-lift { to { opacity: 0; transform: translateY(-8px) scale(1.012); } }
 @keyframes cp-fade { from { opacity: 0; } }
 
 /* ── menu: a small plate of choices ──────────────────────────────────── */
@@ -847,9 +978,15 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
     inset 0 0 0 4px var(--cp-rule),
     0 18px 40px -18px var(--cp-drop),
     0 4px 10px -6px var(--cp-drop);
-  animation: cp-drop 0.24s var(--cp-ease);
+  animation: cp-unfold 0.32s var(--cp-ease);
   transform-origin: top left;
 }
+@keyframes cp-unfold {
+  from { clip-path: inset(0 0 100% 0 round var(--cp-radius)); transform: translateY(-3px); }
+  to { clip-path: inset(0 0 0 0 round var(--cp-radius)); transform: none; }
+}
+.cp-menu-row { display: block; animation: cp-row 0.34s calc(var(--cp-i, 0) * 32ms + 40ms) var(--cp-ease) both; }
+@keyframes cp-row { from { opacity: 0; translate: 0 -5px; } }
 .cp-menu-plate[data-align='end'] { left: auto; right: 0; transform-origin: top right; }
 @keyframes cp-drop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
 .cp-menu-item {
@@ -925,22 +1062,61 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
 .cp-alert-title { margin: 0; font-family: var(--cp-font-display); font-size: 1.02rem; font-weight: 480; color: var(--cp-ink); }
 .cp-alert-body { margin-top: 0.2rem; font-family: var(--cp-font-body); font-size: 0.93rem; line-height: 1.5; color: var(--cp-ink-2); }
 
-/* ── toast ───────────────────────────────────────────────────────────── */
+/* ── toast: a deck of small plates ──────────────────────────────────── */
 
-.cp-toaster { position: fixed; right: 20px; bottom: 20px; z-index: 100; display: grid; gap: 10px; justify-items: end; pointer-events: none; }
+.cp-toaster { position: fixed; right: 20px; bottom: 20px; z-index: 100; width: min(22rem, calc(100vw - 40px)); }
+.cp-toaster-deck { position: relative; height: 4.6rem; transition: height 0.5s var(--cp-ease); }
+.cp-toaster[data-open] .cp-toaster-deck { height: calc(var(--cp-n, 1) * 5.1rem); }
 .cp-toast {
-  width: min(22rem, calc(100vw - 40px));
-  padding: 0.85rem 1rem;
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.85rem 1rem 1rem;
   border-radius: var(--cp-radius);
-  pointer-events: auto;
-  animation: cp-toast-in 0.5s var(--cp-ease-strike);
+  z-index: calc(20 - var(--cp-i));
+  translate: var(--cp-dx, 0px) 0;
+  /* Stacked: each older plate a little behind and smaller. Fanned: laid out
+     in a column so each can be read. */
+  transform: translateY(calc(var(--cp-i) * -9px)) scale(calc(1 - var(--cp-i) * 0.045));
+  transform-origin: 50% 100%;
+  opacity: clamp(0, calc(3 - var(--cp-i)), 1);
+  transition: transform 0.55s var(--cp-ease), opacity 0.4s var(--cp-ease), translate 0.3s var(--cp-ease);
+  animation: cp-toast-in 0.6s var(--cp-ease-strike);
+  touch-action: pan-y;
+  cursor: grab;
   --cp-pool: 18rem;
 }
-.cp-toast[data-leaving] { animation: cp-toast-out 0.32s var(--cp-ease) forwards; }
-@keyframes cp-toast-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
-@keyframes cp-toast-out { to { opacity: 0; transform: translateX(16px); } }
+.cp-toaster[data-open] .cp-toast { transform: translateY(calc(var(--cp-i) * -5.1rem)); opacity: 1; }
+.cp-toast:not([data-front]) > * { transition: opacity 0.3s var(--cp-ease); }
+.cp-toaster:not([data-open]) .cp-toast:not([data-front]) > * { opacity: 0; }
+.cp-toast[data-leaving] { animation: cp-toast-out 0.34s var(--cp-ease) forwards; }
+@keyframes cp-toast-in { from { opacity: 0; translate: 0 120%; } }
+@keyframes cp-toast-out { to { opacity: 0; translate: 110% 0; } }
 .cp-toast-title { margin: 0; font-family: var(--cp-font-display); font-size: 1rem; font-weight: 520; color: var(--cp-m-ink); text-shadow: 0 1px 0 rgb(var(--cp-m-sheen) / 0.5); }
 .cp-toast-body { margin: 0.2rem 0 0; font-family: var(--cp-font-body); font-size: 0.9rem; color: color-mix(in srgb, var(--cp-m-ink) 82%, transparent); }
+/* Its time, running out along an engraved line at the foot of the plate. */
+.cp-toast-life {
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0.45rem;
+  height: 1px;
+  background: rgb(0 0 0 / 0.28);
+  box-shadow: 0 1px 0 rgb(var(--cp-m-sheen) / 0.4);
+  transform-origin: 0 50%;
+  animation: cp-life var(--cp-life, 4600ms) linear forwards;
+}
+@keyframes cp-life { to { scale: 0 1; } }
+
+/* ── medals: seals, coins, hallmarks ──────────────────────────────────── */
+
+.cp-medal { display: inline-block; vertical-align: middle; transform-style: preserve-3d; -webkit-tap-highlight-color: transparent; }
+.cp-medal > svg { filter: drop-shadow(0 2px 3px var(--cp-drop)); }
+.cp-coin { cursor: pointer; }
+.cp-coin-face { display: block; width: 100%; height: 100%; transform-style: preserve-3d; }
+.cp-coin-face > svg { filter: drop-shadow(0 1.5px 2px var(--cp-drop)); }
 
 /* ── avatar ──────────────────────────────────────────────────────────── */
 
@@ -989,8 +1165,28 @@ textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; l
   .cp-tip,
   .cp-accordion-mark { transition: none !important; }
   .cp-dialog[open] .cp-dialog-plate,
+  .cp-dialog[data-closing] .cp-dialog-plate,
   .cp-menu-plate,
+  .cp-menu-row,
+  .cp-button::after,
+  .cp-check-box::after,
+  .cp-switch-thumb,
+  .cp-tip,
+  .cp-progress-fill::after,
+  .cp-focus:focus-visible,
   .cp-toast,
   .cp-skeleton::after { animation: none !important; }
-  .cp-progress[data-indeterminate='true'] .cp-progress-fill { animation: none; width: 100%; opacity: 0.6; }
+  .cp-progress-fill { overflow: hidden; }
+.cp-progress-fill::after {
+  /* Light running along the poured metal while it fills. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 35%, rgb(var(--cp-m-sheen) / 0.7) 50%, transparent 65%);
+  background-size: 250% 100%;
+  animation: cp-pour 2.6s linear infinite;
+  mix-blend-mode: soft-light;
+}
+@keyframes cp-pour { from { background-position: 150% 0; } to { background-position: -100% 0; } }
+.cp-progress[data-indeterminate='true'] .cp-progress-fill { animation: none; width: 100%; opacity: 0.6; }
 }

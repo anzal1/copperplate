@@ -1,4 +1,5 @@
 import { forwardRef, useRef, useState, type ButtonHTMLAttributes } from 'react';
+import { playSound } from './sound';
 import { cx, mergeRefs, useLit, type Metal } from './utils';
 
 export type SwitchProps = Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onChange'> & {
@@ -17,6 +18,7 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(function Switch
   ref,
 ) {
   const [own, setOwn] = useState(defaultChecked);
+  const [moved, setMoved] = useState(false);
   const on = checked ?? own;
   const local = useRef<HTMLButtonElement>(null);
   useLit(local);
@@ -27,12 +29,15 @@ export const Switch = forwardRef<HTMLButtonElement, SwitchProps>(function Switch
       role="switch"
       aria-checked={on}
       data-metal={metal}
+      data-moved={moved || undefined}
       className={cx('cp-switch cp-cut', className)}
       onClick={(e) => {
         onClick?.(e);
         if (e.defaultPrevented) return;
+        setMoved(true);
         if (checked === undefined) setOwn(!on);
         onCheckedChange?.(!on);
+        playSound('bolt');
       }}
       {...props}
     >

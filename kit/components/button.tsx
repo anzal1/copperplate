@@ -1,4 +1,5 @@
 import { forwardRef, useRef, type ButtonHTMLAttributes } from 'react';
+import { useStrike } from './motion';
 import { cx, mergeRefs, useLit, type Metal } from './utils';
 
 export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
@@ -18,6 +19,7 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button
 ) {
   const local = useRef<HTMLButtonElement>(null);
   useLit(local);
+  useStrike(local, variant === 'struck' ? 'press' : 'tick');
   return (
     <button
       ref={mergeRefs(ref, local)}

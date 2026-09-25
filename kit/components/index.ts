@@ -26,3 +26,5 @@ export * from './toast';
 export * from './avatar';
 export * from './table';
 export * from './skeleton';
+export * from './sound';
+export { useStrike, useTilt } from './motion';
