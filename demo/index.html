@@ -2,147 +2,30 @@
 <html lang="en">
   <head>
     <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
     <link rel="icon" href="/favicon.ico" sizes="48x48" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
-    <link rel="icon" type="image/png" sizes="192x192" href="/favicon-192.png" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="theme-color" content="#0a0a0a" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#0f0d0b" />
+    <link rel="stylesheet" href="/fonts.css" />
+    <script>try{var t=localStorage.getItem("copperplate-theme")||"dark";document.documentElement.className="cp-"+t;document.documentElement.style.colorScheme=t}catch(e){document.documentElement.className="cp-dark"}</script>
+    <style>html.cp-dark,html.cp-dark body{background:#0f0d0b}html.cp-light,html.cp-light body{background:#f4f1ea}</style>
     <title>Copperplate</title>
-    <meta name="description" content="Turn any image into an engraved metal plate that catches a moving light, using only SVG filters." />
+    <meta name="description" content="UI components struck and engraved in metal, every one lit by the same lamp. React, copied into your project with the shadcn CLI." />
     <link rel="canonical" href="https://copperplate.anzalabidi.dev/" />
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="copperplate" />
-    <meta property="og:title" content="copperplate. Any image, engraved in light." />
-    <meta property="og:description" content="Turn any image into an engraved metal plate that catches a moving light. One lamp lights every plate on the page, using only SVG filters, in about 6 kB." />
+    <meta property="og:title" content="Copperplate. Move the lamp." />
+    <meta property="og:description" content="UI components struck and engraved in metal, every one lit by the same lamp." />
     <meta property="og:url" content="https://copperplate.anzalabidi.dev/" />
     <meta property="og:image" content="https://copperplate.anzalabidi.dev/og.jpg" />
     <meta property="og:image:width" content="1200" />
     <meta property="og:image:height" content="630" />
-    <meta property="og:image:alt" content="Hokusai's Great Wave engraved in copper, beside the name copperplate and the line Any image, engraved in light." />
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="copperplate. Any image, engraved in light." />
-    <meta name="twitter:description" content="Turn any image into an engraved metal plate that catches a moving light, using only SVG filters." />
     <meta name="twitter:image" content="https://copperplate.anzalabidi.dev/og.jpg" />
-    <link rel="stylesheet" href="./fonts.css" />
-    <link rel="stylesheet" href="./demo.css" />
   </head>
   <body>
-    <header class="shell top">
-      <p class="mono small">copperplate <span class="dim">0.1.0</span></p>
-      <nav class="mono small">
-        <a href="#gallery">Gallery</a>
-        <a href="#metals">Metals</a>
-        <a href="#playground">Playground</a>
-        <a href="#usage">Usage</a>
-        <button type="button" id="theme" class="link">Night</button>
-      </nav>
-    </header>
-
-    <main>
-      <section class="shell intro">
-        <h1>Copperplate</h1>
-        <p class="lede">Any image, printed as an engraved metal plate that catches the light. Its own brightness becomes the depth of the cut, and one lamp lights every plate on the page.</p>
-        <p class="mono small dim" id="status">Move the pointer over the plates.</p>
-        <p class="mono small"><a href="#playground">Try it on your own image ↓</a></p>
-        <button type="button" id="tilt" class="mono small button" hidden>Light by tilting the phone</button>
-      </section>
-
-      <section class="shell">
-        <figure class="hero">
-          <div id="hero" class="plate-host hero-plate"></div>
-          <figcaption class="mono small dim">Katsushika Hokusai, Under the Wave off Kanagawa, c. 1830 to 1832</figcaption>
-        </figure>
-      </section>
-
-      <section class="shell" id="gallery">
-        <h2>Gallery</h2>
-        <p class="body">Thirty-eight public-domain works, engraved as they scroll into view: engravings, woodcuts, sculpture and coins, natural history plates, old maps and star charts, the surface of the Moon, and early photographs. Switch the metal for the whole wall, or narrow it to one kind of work.</p>
-        <div class="toolbar">
-          <div class="chips mono small" id="groups" role="group" aria-label="Show"></div>
-          <div class="chips mono small" id="wall-metal" role="group" aria-label="Metal"></div>
-        </div>
-        <div class="wall" id="wall"></div>
-      </section>
-
-      <section class="shell" id="metals">
-        <h2>Six metals</h2>
-        <p class="body">Each preset is three colours: the shadow in the deepest line, the highlight on the raised ground, and the sheen of the glint. Pass your own for anything else.</p>
-        <div class="metals" id="metal-grid"></div>
-      </section>
-
-      <section class="shell" id="playground">
-        <h2>Playground</h2>
-        <div class="play">
-          <div id="play" class="plate-host play-plate"><span class="drop-hint mono small" aria-hidden="true">Drop it here</span></div>
-          <form class="controls mono small" id="controls" onsubmit="return false">
-            <label>material
-              <select name="material">
-                <option>copper</option><option>brass</option><option>silver</option><option>steel</option><option>gold</option><option>bronze</option>
-              </select>
-            </label>
-            <label>image
-              <select name="src" id="play-src"></select>
-            </label>
-            <div class="own">
-              <input type="file" id="own-file" accept="image/*" hidden />
-              <button type="button" class="chip" id="own-btn">Use your own image</button>
-              <p class="dim">Or drop one on the plate, or paste it. It never leaves your browser.</p>
-            </div>
-            <label>relief <output name="reliefOut"></output><input type="range" name="relief" min="0" max="10" step="0.1" value="3.2" /></label>
-            <label>shine <output name="shineOut"></output><input type="range" name="shine" min="0" max="3" step="0.05" value="1" /></label>
-            <label>sharpness <output name="sharpnessOut"></output><input type="range" name="sharpness" min="2" max="80" step="1" value="26" /></label>
-            <label>light height <output name="lightHeightOut"></output><input type="range" name="lightHeight" min="0.1" max="2" step="0.05" value="0.55" /></label>
-            <label>fit
-              <select name="fit"><option>cover</option><option>contain</option></select>
-            </label>
-            <label class="check"><input type="checkbox" name="plateMark" checked /> plate mark</label>
-            <label class="check"><input type="checkbox" name="static" /> static</label>
-          </form>
-        </div>
-        <pre class="code" id="snippet"></pre>
-      </section>
-
-      <section class="shell" id="usage">
-        <h2>Usage</h2>
-        <pre class="code">npm install copperplate</pre>
-        <div class="two">
-          <div>
-            <p class="mono small dim">Vanilla</p>
-<pre class="code">import { engrave } from 'copperplate';
-
-const plate = engrave('#portrait', {
-  src: '/knight.jpg',
-  alt: 'Dürer, Knight, Death and the Devil',
-  material: 'copper',
-});
-
-plate.update({ relief: 4 });
-plate.destroy();</pre>
-          </div>
-          <div>
-            <p class="mono small dim">React</p>
-<pre class="code">import { Engraving } from 'copperplate/react';
-
-&lt;Engraving
-  src="/knight.jpg"
-  alt="Dürer, Knight, Death and the Devil"
-  material="brass"
-  style={{ width: 320, aspectRatio: '1' }}
-/&gt;</pre>
-          </div>
-        </div>
-      </section>
-    </main>
-
-    <footer class="shell foot small">
-      <details class="credits">
-        <summary class="mono small">Credits: every work shown is in the public domain</summary>
-        <ol class="small" id="credits"></ol>
-      </details>
-      <p class="mono dim">MIT licence. Only SVG filters; no canvas, no WebGL.</p>
-    </footer>
-
-    <script type="module" src="./main.ts"></script>
+    <div id="root"></div>
+    <script type="module" src="/site/home.tsx"></script>
   </body>
 </html>

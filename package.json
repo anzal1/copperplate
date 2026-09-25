@@ -1,6 +1,6 @@
 {
   "name": "copperplate",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Turn any image into an engraved metal plate that catches a moving light, using only SVG filters.",
   "keywords": [
     "svg",
@@ -47,8 +47,8 @@
     "build": "rm -rf dist && tsc -p tsconfig.json",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "dev": "vite demo",
-    "demo:build": "vite build demo",
+    "dev": "node scripts/pages.mjs && vite demo",
+    "demo:build": "node scripts/pages.mjs && node scripts/registry.mjs && vite build demo",
     "perf": "node scripts/perf.mjs",
     "shots": "node scripts/shots.mjs"
   },

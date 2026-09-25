@@ -1,3 +1,6 @@
+// The metal itself. Every component imports utils, so adding any one of them
+// brings the stylesheet with it.
+import './metal.css';
 import type { MutableRefObject, Ref, RefCallback } from 'react';
 import { useIlluminate } from 'copperplate/react';
 

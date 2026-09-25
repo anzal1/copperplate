@@ -1,6 +1,6 @@
 import { StrictMode, useState } from 'react';
 import { createRoot } from 'react-dom/client';
-import '../kit/metal.css';
+import '../kit/components/metal.css';
 import {
   Accordion, AccordionItem, Alert, Avatar, Coin, Dialog, EngravedText, Hallmark, Menu, MenuItem, MenuLabel, MenuRule, Plate, Seal, Skeleton,
   Table, TBody, TD, TH, THead, TR, Toaster, Tooltip, toast,

@@ -4,7 +4,9 @@ Copperplate turns any image into an engraved metal plate that catches a moving l
 
 No canvas, no WebGL, no runtime dependencies. About 6 kB gzipped.
 
-**Live demo: [copperplate.anzalabidi.dev](https://copperplate.anzalabidi.dev)**, thirty-eight public-domain works engraved on one page. Move the pointer over them.
+**Site: [copperplate.anzalabidi.dev](https://copperplate.anzalabidi.dev)**. The [plates page](https://copperplate.anzalabidi.dev/plates/) has thirty-eight public-domain works engraved on one page and a playground for your own image.
+
+It also comes as a set of UI components (buttons, fields, switches, sliders, tabs, dialogs, toasts, seals, coins and more) struck and engraved in the same metal and lit by the same lamp. See [Components](#components).
 
 ![Hokusai's Great Wave engraved in copper](demo/shots/00-hero-dark.jpg)
 
@@ -89,6 +91,18 @@ The light's source is, in order of priority: `setLamp`, device tilt (if enabled)
 
 The sun sits low in the east (left) at six in the morning, high in the middle at noon and low in the west (right) at six in the evening, and rests at the horizon overnight. Its colour is a warm white through the day, noticeably warmer around dusk, a little warmer at dawn and faintly cool in the small hours. The colour applies whatever is driving the light.
 
+### Lighting your own elements
+
+```js
+import { illuminate, followLamp } from 'copperplate';
+import { useIlluminate } from 'copperplate/react';
+```
+
+- `illuminate(el)` registers an element with the lamp and writes, on that element only, `--cp-lx` and `--cp-ly` (the light in px from its top left), `--cp-lu` and `--cp-lv` (the same as fractions), `--cp-w` and `--cp-h` (its size), and `--cp-light` (the light's colour). Use them in CSS to place a highlight. It returns a function that stops. `useIlluminate(ref)` is the React form.
+- `followLamp(el, fn)` calls `fn(x, y, rect, color)` with the light relative to the element, for moving an SVG light of your own.
+
+Both share the plates' single listener and frame, and only elements near the viewport are updated.
+
 ### Theming the plate mark
 
 The mark follows the page's `color-scheme` where `light-dark()` is supported, and is light otherwise. Set these custom properties on the plate, or anywhere above it, to match your page:
@@ -151,13 +165,33 @@ Please treat the Chrome numbers and screenshots as the reference, and try the de
 
 A browser without SVG filter support shows nothing in the plate, so give the target a background if that matters to you.
 
+## Components
+
+A set of React components in the same metal, added to your project as source with the [shadcn](https://ui.shadcn.com) command line, so they are yours to change:
+
+```sh
+npx shadcn@latest add https://copperplate.anzalabidi.dev/r/switch.json
+npx shadcn@latest add https://copperplate.anzalabidi.dev/r/all.json   # every one
+```
+
+They land in `components/copperplate/`, bring their own stylesheet, and install this package for the lighting. No Tailwind is needed. Every one has a page with a live demo, its props and how it behaves at [copperplate.anzalabidi.dev/components](https://copperplate.anzalabidi.dev/components/).
+
+The rules they follow:
+
+- Most of a page is paper and ink. Quiet controls are engraved into the paper; the one loud control in a group is struck in metal.
+- Every metal surface catches the same lamp.
+- State is physical. A press sinks, a checked box has a tile struck into it, a switch is a slide bolt, focus is a burnished edge. Success, warning and danger are metals (verdigris, brass, oxide) rather than traffic-light colours.
+- They are built on native elements, so keyboards, screen readers and forms work as they always do, and all motion stops for anyone who prefers reduced motion. Sound is synthesised, and off unless you call `setSounds(true)`.
+
+The source is in `kit/components/`; `npm run dev` serves the site, with a specimen sheet of every component at `/kit.html`.
+
 ## Development
 
 ```sh
 npm install
 npm test          # vitest: materials, sun position, option parsing, server imports
 npm run build     # tsc to dist/
-npm run dev       # demo at http://localhost:5178
+npm run dev       # the site at http://localhost:5178
 npm run perf      # frame-time measurement, needs the dev server and Chrome
 npm run shots     # demo screenshots into demo/shots/
 ```
