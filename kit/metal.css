@@ -1,0 +1,996 @@
+/*
+ * copperplate/ui: the metal.
+ *
+ * Three ideas carry every component.
+ *
+ * 1. Two kinds of surface. Most of the page is paper and ink; metal is the
+ *    exception, kept for the one thing that matters in a group. A quiet
+ *    control is engraved into the paper (a cut channel, a double rule). A
+ *    loud one is struck in metal (a bevelled face, lettering stamped in).
+ *
+ * 2. One lamp. Every metal face carries a highlight placed where the page's
+ *    light is, relative to itself (copperplate's illuminate() writes
+ *    --cp-lx/--cp-ly on the element). Sweep the pointer and a row of buttons
+ *    catches one light, not one each.
+ *
+ * 3. State is physical. Pressed sinks. Checked is struck in. Focus is a
+ *    burnished edge. Disabled is dulled. Success, warning and danger are
+ *    metals and patinas (verdigris, brass, oxide) rather than traffic lights.
+ *
+ * Everything is a custom property, so a theme is a handful of overrides.
+ */
+
+/* ── ground: paper and ink ───────────────────────────────────────────── */
+
+:root,
+.cp-light {
+  --cp-paper: #f4f1ea;
+  --cp-paper-2: #ebe6dc;
+  --cp-paper-3: #e2dccf;
+  --cp-ink: #17140f;
+  --cp-ink-2: #55503f;
+  --cp-ink-3: #736c58;
+  --cp-rule: #d9d1c1;
+  --cp-rule-2: #c4baa6;
+  /* The cut: shadow on the upper lip of a channel, light on the lower. */
+  --cp-cut-dark: rgb(58 40 20 / 0.22);
+  --cp-cut-light: rgb(255 255 255 / 0.7);
+  --cp-well: #e6e0d3;
+  --cp-cut-ring: rgb(58 40 20 / 0.13);
+  --cp-drop: rgb(40 24 10 / 0.28);
+  --cp-accent: #a2542c;
+
+  --cp-font-display: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --cp-font-body: 'Newsreader', 'Iowan Old Style', Georgia, serif;
+  --cp-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  --cp-radius: 2px;
+  --cp-ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --cp-ease-strike: cubic-bezier(0.34, 1.56, 0.64, 1);
+  /* How wide the lamp's pool is on a metal face. */
+  --cp-pool: 15rem;
+}
+
+.cp-dark {
+  --cp-paper: #0f0d0b;
+  --cp-paper-2: #171512;
+  --cp-paper-3: #201d19;
+  --cp-ink: #f5f1ea;
+  --cp-ink-2: #a8a29a;
+  --cp-ink-3: #837c70;
+  --cp-rule: #2a2622;
+  --cp-rule-2: #3a352f;
+  --cp-cut-dark: rgb(0 0 0 / 0.55);
+  --cp-cut-light: rgb(255 240 220 / 0.075);
+  --cp-well: #0b0a08;
+  --cp-cut-ring: #2d2924;
+  --cp-drop: rgb(0 0 0 / 0.55);
+  --cp-accent: #c97a4e;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not(.cp-light) {
+    --cp-paper: #0f0d0b;
+    --cp-paper-2: #171512;
+    --cp-paper-3: #201d19;
+    --cp-ink: #f5f1ea;
+    --cp-ink-2: #a8a29a;
+    --cp-ink-3: #837c70;
+    --cp-rule: #2a2622;
+    --cp-rule-2: #3a352f;
+    --cp-cut-dark: rgb(0 0 0 / 0.55);
+    --cp-cut-light: rgb(255 240 220 / 0.075);
+    --cp-well: #0b0a08;
+    --cp-cut-ring: #2d2924;
+    --cp-drop: rgb(0 0 0 / 0.55);
+    --cp-accent: #c97a4e;
+  }
+}
+
+/* A themed region sets its own ink, so text inside it never inherits the
+   colour of a differently themed page around it. */
+.cp-light,
+.cp-dark { color: var(--cp-ink); }
+
+/* ── materials ───────────────────────────────────────────────────────── */
+/*
+ * Each metal is six colours: the face from its lit top (hi) through its
+ * body (mid) to its lower edge (lo), the edge line, the colour lettering is
+ * stamped in, and the lamp's highlight on it.
+ */
+
+.cp-metal,
+[data-metal='copper'] {
+  --cp-m-hi: #e3a676;
+  --cp-m-mid: #b8703f;
+  --cp-m-lo: #86471f;
+  --cp-m-edge: #5f2f12;
+  --cp-m-ink: #3a1b09;
+  --cp-m-sheen: 255 236 212;
+}
+[data-metal='brass'] {
+  --cp-m-hi: #e6cf8e;
+  --cp-m-mid: #bf9f52;
+  --cp-m-lo: #86692a;
+  --cp-m-edge: #5a4414;
+  --cp-m-ink: #372808;
+  --cp-m-sheen: 255 246 214;
+}
+[data-metal='silver'] {
+  --cp-m-hi: #e9ebed;
+  --cp-m-mid: #b9bec4;
+  --cp-m-lo: #858b92;
+  --cp-m-edge: #5c6167;
+  --cp-m-ink: #25282c;
+  --cp-m-sheen: 255 255 255;
+}
+[data-metal='steel'] {
+  --cp-m-hi: #aab4be;
+  --cp-m-mid: #7a8591;
+  --cp-m-lo: #4f5862;
+  --cp-m-edge: #333a42;
+  --cp-m-ink: #151a1f;
+  --cp-m-sheen: 236 244 255;
+}
+/* Copper left to the weather: the success patina. */
+[data-metal='verdigris'] {
+  --cp-m-hi: #9fc9b0;
+  --cp-m-mid: #6a9f86;
+  --cp-m-lo: #41705d;
+  --cp-m-edge: #2a4d3f;
+  --cp-m-ink: #13291f;
+  --cp-m-sheen: 232 255 240;
+}
+/* Iron gone to rust: the danger patina. */
+[data-metal='oxide'] {
+  --cp-m-hi: #d98a6a;
+  --cp-m-mid: #a4492c;
+  --cp-m-lo: #6f2615;
+  --cp-m-edge: #4a160a;
+  --cp-m-ink: #2a0c04;
+  --cp-m-sheen: 255 222 204;
+}
+
+/* ── the struck face ─────────────────────────────────────────────────── */
+/*
+ * Four layers, top to bottom: the lamp's pool, placed where the light is
+ * (tinted by the light's colour, so dusk is warmer), a fine brushed grain,
+ * a raking light across the face, and the metal's own vertical gradient.
+ * Bevelled by an inset light edge above and a dark edge below.
+ */
+
+.cp-face {
+  --cp-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.012 1.1' numOctaves='2' seed='7'/%3E%3CfeColorMatrix values='0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0 0.5 0 0 0 0.4 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23g)'/%3E%3C/svg%3E");
+  --cp-face-bg:
+    radial-gradient(
+      var(--cp-pool) circle at var(--cp-lx, 28%) var(--cp-ly, -30%),
+      color-mix(in srgb, rgb(var(--cp-m-sheen)) 70%, var(--cp-light, #fff4e6)) 0%,
+      rgb(var(--cp-m-sheen) / 0.35) 22%,
+      transparent 58%
+    ),
+    var(--cp-grain),
+    linear-gradient(100deg, rgb(255 255 255 / 0.08), transparent 40%, rgb(0 0 0 / 0.06) 70%, transparent),
+    linear-gradient(180deg, var(--cp-m-hi) 0%, var(--cp-m-mid) 52%, var(--cp-m-lo) 100%);
+  --cp-face-shadow:
+    inset 0 1px 0 rgb(var(--cp-m-sheen) / 0.55),
+    inset 0 -1.5px 0 rgb(0 0 0 / 0.22),
+    inset 0 -6px 10px -6px rgb(0 0 0 / 0.35),
+    0 1px 0 rgb(0 0 0 / 0.08),
+    0 3px 8px -3px var(--cp-drop);
+  background: var(--cp-face-bg);
+  background-blend-mode: soft-light, overlay, normal, normal;
+  border: 1px solid var(--cp-m-edge);
+  box-shadow: var(--cp-face-shadow);
+  color: var(--cp-m-ink);
+}
+
+/* Lettering stamped into metal: a light lip below the cut, a shadow above. */
+.cp-stamped {
+  color: var(--cp-m-ink);
+  text-shadow:
+    0 1px 0 rgb(var(--cp-m-sheen) / 0.5),
+    0 -0.5px 0 rgb(0 0 0 / 0.25);
+}
+
+/* A channel cut into the paper. */
+.cp-cut {
+  background: var(--cp-well);
+  box-shadow:
+    inset 0 1px 2px var(--cp-cut-dark),
+    inset 0 0 0 1px var(--cp-cut-ring),
+    0 1px 0 var(--cp-cut-light);
+}
+
+/* The burnished edge: focus, drawn as light catching a polished rim. */
+.cp-focus:focus-visible,
+.cp-focus-within:focus-within:has(:focus-visible) {
+  outline: none;
+  box-shadow:
+    0 0 0 2px var(--cp-paper),
+    0 0 0 3.5px var(--cp-accent),
+    0 0 14px 2px color-mix(in srgb, var(--cp-accent) 40%, transparent);
+}
+
+.cp-label {
+  font-family: var(--cp-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cp-ink-2);
+}
+
+/* ── button ──────────────────────────────────────────────────────────── */
+
+.cp-button {
+  --cp-bh: 2.5rem;
+  --cp-bpx: 1.15rem;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  height: var(--cp-bh);
+  padding: 0 var(--cp-bpx);
+  border-radius: var(--cp-radius);
+  font-family: var(--cp-font-mono);
+  font-size: 0.75rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    transform 0.16s var(--cp-ease),
+    box-shadow 0.16s var(--cp-ease),
+    filter 0.3s var(--cp-ease),
+    color 0.3s var(--cp-ease),
+    border-color 0.3s var(--cp-ease);
+}
+.cp-button svg { width: 1.05em; height: 1.05em; flex-shrink: 0; }
+.cp-button[data-size='sm'] { --cp-bh: 2rem; --cp-bpx: 0.85rem; font-size: 0.6875rem; }
+.cp-button[data-size='lg'] { --cp-bh: 3rem; --cp-bpx: 1.5rem; font-size: 0.8125rem; }
+.cp-button[data-size='icon'] { --cp-bpx: 0; width: var(--cp-bh); }
+.cp-button:disabled,
+.cp-button[aria-disabled='true'] { cursor: not-allowed; }
+
+/* Struck: the loud one. */
+.cp-button[data-variant='struck'] {
+  text-shadow:
+    0 1px 0 rgb(var(--cp-m-sheen) / 0.5),
+    0 -0.5px 0 rgb(0 0 0 / 0.2);
+}
+.cp-button[data-variant='struck']:hover { filter: brightness(1.06) saturate(1.04); }
+.cp-button[data-variant='struck']:active:not(:disabled) {
+  transform: translateY(1px);
+  box-shadow:
+    inset 0 2px 5px rgb(0 0 0 / 0.38),
+    inset 0 -1px 0 rgb(var(--cp-m-sheen) / 0.25),
+    0 0 0 transparent;
+}
+.cp-button[data-variant='struck']:disabled {
+  filter: grayscale(0.7) brightness(0.92) contrast(0.85);
+  opacity: 0.7;
+}
+
+/* Engraved: the quiet one. A double rule cut round the label. */
+.cp-button[data-variant='engraved'] {
+  background: transparent;
+  color: var(--cp-ink-2);
+  border: 1px solid color-mix(in srgb, var(--cp-accent) 52%, transparent);
+  box-shadow:
+    inset 0 0 0 3px var(--cp-paper),
+    inset 0 0 0 4px color-mix(in srgb, var(--cp-accent) 26%, transparent);
+}
+.cp-button[data-variant='engraved']:hover {
+  color: var(--cp-ink);
+  border-color: var(--cp-accent);
+  box-shadow:
+    inset 0 0 0 3px var(--cp-paper),
+    inset 0 0 0 4px color-mix(in srgb, var(--cp-accent) 60%, transparent);
+}
+.cp-button[data-variant='engraved']:active:not(:disabled) { transform: translateY(1px); }
+.cp-button[data-variant='engraved']:disabled { opacity: 0.45; }
+
+/* Plain: a label and a hairline that draws in copper on hover. */
+.cp-button[data-variant='plain'] {
+  background: none;
+  border: 0;
+  height: auto;
+  padding: 0.25rem 0;
+  color: var(--cp-ink-2);
+  background-image: linear-gradient(var(--cp-accent), var(--cp-accent));
+  background-size: 0% 1px;
+  background-position: 0 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.45s var(--cp-ease), color 0.3s var(--cp-ease);
+}
+.cp-button[data-variant='plain']:hover { color: var(--cp-ink); background-size: 100% 1px; }
+
+/* ── badge ───────────────────────────────────────────────────────────── */
+
+.cp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  height: 1.375rem;
+  padding: 0 0.5rem;
+  border-radius: var(--cp-radius);
+  font-family: var(--cp-font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  vertical-align: middle;
+}
+.cp-badge.cp-face { box-shadow: inset 0 1px 0 rgb(var(--cp-m-sheen) / 0.5), inset 0 -1px 0 rgb(0 0 0 / 0.2), 0 1px 2px -1px var(--cp-drop); }
+.cp-badge[data-variant='engraved'] {
+  color: var(--cp-ink-2);
+  border: 1px solid var(--cp-rule-2);
+  box-shadow: inset 0 0 0 2px var(--cp-paper), inset 0 0 0 3px var(--cp-rule);
+}
+/* A stamped dot, for status. */
+.cp-badge .cp-dot {
+  width: 0.375rem;
+  height: 0.375rem;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgb(var(--cp-m-sheen)), var(--cp-m-mid) 55%, var(--cp-m-edge));
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.15);
+}
+
+/* ── field: input, textarea, select ─────────────────────────────────── */
+
+.cp-field { display: grid; gap: 0.45rem; }
+.cp-hint { font-family: var(--cp-font-body); font-size: 0.8125rem; color: var(--cp-ink-3); }
+.cp-field[data-invalid='true'] .cp-hint { color: #a4492c; }
+
+.cp-input {
+  width: 100%;
+  height: 2.625rem;
+  padding: 0 0.85rem;
+  border: 0;
+  border-radius: var(--cp-radius);
+  font-family: var(--cp-font-body);
+  font-size: 1rem;
+  color: var(--cp-ink);
+  caret-color: var(--cp-accent);
+  transition: box-shadow 0.3s var(--cp-ease), background-color 0.3s var(--cp-ease);
+}
+textarea.cp-input { height: auto; min-height: 6.5rem; padding: 0.7rem 0.85rem; line-height: 1.5; resize: vertical; }
+.cp-input::placeholder { color: var(--cp-ink-3); opacity: 0.75; font-style: italic; }
+.cp-input:hover { box-shadow: inset 0 1px 2px var(--cp-cut-dark), inset 0 0 0 1px var(--cp-rule-2), 0 1px 0 var(--cp-cut-light); }
+.cp-input:focus-visible {
+  outline: none;
+  box-shadow:
+    inset 0 1px 2px var(--cp-cut-dark),
+    inset 0 0 0 1px var(--cp-accent),
+    0 1px 0 var(--cp-cut-light),
+    0 0 0 3px color-mix(in srgb, var(--cp-accent) 18%, transparent);
+}
+.cp-field[data-invalid='true'] .cp-input { box-shadow: inset 0 1px 2px var(--cp-cut-dark), inset 0 0 0 1px #a4492c, 0 1px 0 var(--cp-cut-light); }
+.cp-input:disabled { opacity: 0.55; cursor: not-allowed; }
+
+.cp-select { position: relative; display: block; }
+.cp-select select { appearance: none; padding-right: 2.4rem; cursor: pointer; }
+.cp-select .cp-chevron {
+  position: absolute;
+  right: 0.8rem;
+  top: 50%;
+  width: 0.7rem;
+  height: 0.7rem;
+  translate: 0 -50%;
+  pointer-events: none;
+  color: var(--cp-ink-2);
+}
+
+/* ── checkbox ────────────────────────────────────────────────────────── */
+/* An engraved socket. Checked, a copper tile is struck into it with the
+   tick stamped in, overshooting a hair and settling, like a die landing. */
+
+.cp-check { display: inline-flex; align-items: center; gap: 0.7rem; cursor: pointer; font-family: var(--cp-font-body); font-size: 1rem; color: var(--cp-ink); }
+.cp-check input { position: absolute; opacity: 0; width: 1px; height: 1px; pointer-events: none; }
+.cp-check-box {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  flex-shrink: 0;
+  border-radius: var(--cp-radius);
+}
+.cp-check-tile {
+  position: absolute;
+  inset: 2px;
+  border-radius: 1px;
+  display: grid;
+  place-items: center;
+  opacity: 0;
+  transform: scale(1.35);
+  transition: opacity 0.12s linear, transform 0.32s var(--cp-ease-strike);
+}
+.cp-check-tile svg { width: 72%; height: 72%; }
+.cp-check-tile svg path { stroke: var(--cp-m-ink); filter: drop-shadow(0 0.75px 0 rgb(var(--cp-m-sheen) / 0.55)); }
+.cp-check input:checked + .cp-check-box .cp-check-tile { opacity: 1; transform: scale(1); }
+.cp-check input:focus-visible + .cp-check-box { box-shadow: 0 0 0 2px var(--cp-paper), 0 0 0 3.5px var(--cp-accent), 0 0 12px 2px color-mix(in srgb, var(--cp-accent) 40%, transparent); }
+.cp-check input:disabled + .cp-check-box { opacity: 0.5; }
+.cp-check:has(input:disabled) { cursor: not-allowed; color: var(--cp-ink-3); }
+
+/* ── radio ───────────────────────────────────────────────────────────── */
+/* A round socket; the chosen one takes a domed rivet. */
+
+.cp-radio-group { display: grid; gap: 0.7rem; }
+.cp-radio .cp-check-box { border-radius: 50%; }
+.cp-radio .cp-check-tile {
+  inset: 4px;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle at calc(var(--cp-lu, 0.3) * 100%) calc(var(--cp-lv, 0.2) * 100%), rgb(var(--cp-m-sheen)) 0%, var(--cp-m-hi) 22%, var(--cp-m-mid) 58%, var(--cp-m-lo) 100%);
+  border: 1px solid var(--cp-m-edge);
+  box-shadow: 0 1px 1.5px var(--cp-drop);
+}
+
+/* ── switch ──────────────────────────────────────────────────────────── */
+/* A slide bolt. The slot is cut into the paper; the bolt is a copper slug
+   with three grip lines. Shot home, the slot behind it shows copper inlay. */
+
+.cp-switch {
+  --cp-sw: 2.75rem;
+  --cp-sh: 1.5rem;
+  --cp-thumb: calc(var(--cp-sh) - 6px);
+  position: relative;
+  display: inline-block;
+  width: var(--cp-sw);
+  height: var(--cp-sh);
+  flex-shrink: 0;
+  border: 0;
+  padding: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  --cp-slx: var(--cp-lx);
+  --cp-sly: var(--cp-ly);
+}
+@property --cp-travel { syntax: '<length>'; inherits: false; initial-value: 0px; }
+.cp-switch-inlay {
+  position: absolute;
+  inset: 3px;
+  border-radius: 999px;
+  background:
+    repeating-linear-gradient(90deg, rgb(0 0 0 / 0.1) 0 1px, transparent 1px 4px),
+    linear-gradient(180deg, var(--cp-m-lo), var(--cp-m-mid));
+  box-shadow: inset 0 1px 2px rgb(0 0 0 / 0.45);
+  clip-path: inset(0 100% 0 0 round 999px);
+  transition: clip-path 0.38s var(--cp-ease);
+}
+.cp-switch-thumb {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: var(--cp-thumb);
+  height: var(--cp-thumb);
+  border-radius: 999px;
+  transition: transform 0.38s var(--cp-ease-strike), --cp-travel 0.38s var(--cp-ease-strike);
+  /* The lamp is measured on the switch; the pool is shifted by the bolt's
+     travel, so the highlight stays where the light is as the bolt slides. */
+  --cp-lx: calc(var(--cp-slx, 30%) - 3px - var(--cp-travel));
+  --cp-ly: calc(var(--cp-sly, -30%) - 3px);
+}
+.cp-switch-thumb::after {
+  content: '';
+  position: absolute;
+  inset: 30% 32%;
+  background: repeating-linear-gradient(90deg, rgb(0 0 0 / 0.28) 0 1px, rgb(var(--cp-m-sheen) / 0.45) 1px 2px, transparent 2px 3.5px);
+  border-radius: 1px;
+}
+.cp-switch[aria-checked='true'] .cp-switch-thumb { --cp-travel: calc(var(--cp-sw) - var(--cp-thumb) - 6px); transform: translateX(var(--cp-travel)); }
+.cp-switch[aria-checked='true'] .cp-switch-inlay { clip-path: inset(0 0 0 0 round 999px); }
+.cp-switch:disabled { opacity: 0.5; cursor: not-allowed; }
+.cp-switch:focus-visible { outline: none; box-shadow: inset 0 1px 2px var(--cp-cut-dark), 0 0 0 2px var(--cp-paper), 0 0 0 3.5px var(--cp-accent), 0 0 12px 2px color-mix(in srgb, var(--cp-accent) 40%, transparent); }
+
+/* ── slider ──────────────────────────────────────────────────────────── */
+/* A rule engraved with a scale, copper poured to the value, and a knurled
+   disc riding the groove. A real range input sits on top, for keyboards,
+   screen readers and touch. */
+
+.cp-slider { position: relative; height: 2.25rem; --cp-v: 0.5; touch-action: none; --cp-slx: var(--cp-lx); --cp-sly: var(--cp-ly); }
+.cp-slider-scale {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0.35rem;
+  height: 0.4rem;
+  background: repeating-linear-gradient(90deg, var(--cp-rule-2) 0 1px, transparent 1px calc(10% - 0.1px));
+  background-size: calc(100% - 1px) 100%;
+  mask: linear-gradient(90deg, #000 0 0);
+  opacity: 0.9;
+}
+.cp-slider-scale::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(90deg, var(--cp-rule) 0 1px, transparent 1px calc(2% - 0.02px));
+  top: 45%;
+}
+.cp-slider-track {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 1.1rem;
+  height: 0.4rem;
+  border-radius: 999px;
+}
+.cp-slider-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: calc(var(--cp-v) * 100%);
+  border-radius: 999px;
+  border-width: 0 !important;
+  box-shadow: inset 0 1px 0 rgb(var(--cp-m-sheen) / 0.45), inset 0 -1px 1px rgb(0 0 0 / 0.3) !important;
+}
+.cp-slider-thumb {
+  position: absolute;
+  top: calc(1.3rem - 0.7rem);
+  left: calc(var(--cp-v) * (100% - 1.4rem));
+  width: 1.4rem;
+  height: 1.4rem;
+  border-radius: 50%;
+  pointer-events: none;
+  transition: transform 0.2s var(--cp-ease);
+  --cp-lx: calc(var(--cp-slx, 30%) - var(--cp-v) * (var(--cp-w, 0px) - 1.4rem));
+  --cp-ly: calc(var(--cp-sly, -30%) - 0.6rem);
+}
+.cp-slider-fill { --cp-ly: calc(var(--cp-sly, -30%) - 1.1rem); }
+.cp-slider-thumb::before {
+  /* The knurled rim. */
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 0deg, rgb(0 0 0 / 0.22) 0 4deg, rgb(var(--cp-m-sheen) / 0.3) 4deg 8deg);
+  mask: radial-gradient(circle, transparent 58%, #000 60%);
+}
+.cp-slider-thumb::after {
+  content: '';
+  position: absolute;
+  inset: 34%;
+  border-radius: 50%;
+  box-shadow: inset 0 1px 1px rgb(0 0 0 / 0.35), 0 1px 0 rgb(var(--cp-m-sheen) / 0.5);
+}
+.cp-slider input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  margin: 0;
+  opacity: 0;
+  cursor: grab;
+}
+.cp-slider input:active { cursor: grabbing; }
+.cp-slider:has(input:active) .cp-slider-thumb { transform: scale(1.08); }
+.cp-slider:has(input:focus-visible) .cp-slider-thumb { box-shadow: 0 0 0 2px var(--cp-paper), 0 0 0 3.5px var(--cp-accent), 0 0 12px 2px color-mix(in srgb, var(--cp-accent) 40%, transparent); }
+.cp-slider:has(input:disabled) { opacity: 0.5; }
+
+/* ── tabs ────────────────────────────────────────────────────────────── */
+/* A tray cut into the paper; the chosen tab is a struck plate that slides
+   under the label. */
+
+.cp-tabs-list {
+  position: relative;
+  display: inline-grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  padding: 3px;
+  border-radius: calc(var(--cp-radius) + 2px);
+  --cp-slx: var(--cp-lx);
+  --cp-sly: var(--cp-ly);
+}
+.cp-tab {
+  position: relative;
+  z-index: 1;
+  height: 2rem;
+  padding: 0 1rem;
+  border: 0;
+  background: none;
+  border-radius: var(--cp-radius);
+  font-family: var(--cp-font-mono);
+  font-size: 0.6875rem;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--cp-ink-3);
+  cursor: pointer;
+  transition: color 0.3s var(--cp-ease);
+}
+.cp-tab:hover { color: var(--cp-ink); }
+.cp-tab[aria-selected='true'] {
+  color: var(--cp-m-ink);
+  text-shadow: 0 1px 0 rgb(var(--cp-m-sheen) / 0.5);
+}
+.cp-tab:focus-visible { outline: none; box-shadow: 0 0 0 1.5px var(--cp-accent); }
+.cp-tabs-plate {
+  position: absolute;
+  z-index: 0;
+  top: 3px;
+  bottom: 3px;
+  border-radius: var(--cp-radius);
+  transition: left 0.42s var(--cp-ease), width 0.42s var(--cp-ease), --cp-px 0.42s var(--cp-ease);
+  --cp-lx: calc(var(--cp-slx, 30%) - var(--cp-px));
+  --cp-ly: calc(var(--cp-sly, -30%) - 3px);
+}
+@property --cp-px { syntax: '<length>'; inherits: false; initial-value: 0px; }
+
+/* ── card: a plaque ──────────────────────────────────────────────────── */
+
+.cp-card {
+  position: relative;
+  padding: 1.5rem;
+  background: var(--cp-paper-2);
+  border: 1px solid var(--cp-rule-2);
+  border-radius: var(--cp-radius);
+  box-shadow:
+    inset 0 0 0 4px var(--cp-paper-2),
+    inset 0 0 0 5px var(--cp-rule),
+    0 1px 0 var(--cp-cut-light),
+    0 10px 30px -18px var(--cp-drop);
+  color: var(--cp-ink);
+}
+/* A plate mark: the bevel a press leaves round a printed plate. */
+.cp-card[data-variant='plate'] {
+  background: var(--cp-paper);
+  border-color: var(--cp-rule);
+  box-shadow:
+    inset 1px 1px 0 var(--cp-cut-light),
+    inset -1px -1px 0 var(--cp-cut-dark),
+    inset 0 0 0 7px var(--cp-paper),
+    inset 0 0 0 8px var(--cp-rule),
+    0 10px 30px -18px var(--cp-drop);
+}
+/* Or the whole plaque in metal. */
+.cp-card.cp-face {
+  background: var(--cp-face-bg);
+  background-blend-mode: soft-light, overlay, normal, normal;
+  border-color: var(--cp-m-edge);
+  box-shadow:
+    var(--cp-face-shadow),
+    inset 0 0 0 5px transparent,
+    inset 0 0 0 6px rgb(0 0 0 / 0.18),
+    inset 0 0 0 7px rgb(var(--cp-m-sheen) / 0.3);
+  --cp-pool: 26rem;
+}
+.cp-card.cp-face .cp-card-eyebrow,
+.cp-card.cp-face .cp-card-title { color: var(--cp-m-ink); text-shadow: 0 1px 0 rgb(var(--cp-m-sheen) / 0.5), 0 -0.5px 0 rgb(0 0 0 / 0.25); }
+.cp-card-eyebrow { margin: 0 0 0.6rem; }
+.cp-card-title {
+  margin: 0;
+  font-family: var(--cp-font-display);
+  font-size: 1.375rem;
+  font-weight: 450;
+  line-height: 1.15;
+  letter-spacing: -0.01em;
+}
+.cp-card-body { margin: 0.6rem 0 0; font-family: var(--cp-font-body); font-size: 0.975rem; line-height: 1.55; color: var(--cp-ink-2); }
+.cp-card.cp-face .cp-card-body { color: color-mix(in srgb, var(--cp-m-ink) 80%, transparent); }
+.cp-card-footer { margin-top: 1.25rem; display: flex; gap: 0.6rem; align-items: center; flex-wrap: wrap; }
+
+/* ── separator ───────────────────────────────────────────────────────── */
+/* An engraved rule: a cut line with its light lip. The ornament variant
+   sets a lozenge in the middle, as a printer's rule would. */
+
+.cp-separator {
+  border: 0;
+  height: 2px;
+  margin: 1.5rem 0;
+  background: linear-gradient(var(--cp-cut-dark), var(--cp-cut-dark)) 0 0 / 100% 1px no-repeat,
+    linear-gradient(var(--cp-cut-light), var(--cp-cut-light)) 0 1px / 100% 1px no-repeat;
+}
+.cp-separator[data-variant='ornament'] {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 0.75rem;
+  height: auto;
+  background: none;
+}
+.cp-separator[data-variant='ornament']::before,
+.cp-separator[data-variant='ornament']::after {
+  content: '';
+  height: 2px;
+  background: linear-gradient(var(--cp-cut-dark), var(--cp-cut-dark)) 0 0 / 100% 1px no-repeat,
+    linear-gradient(var(--cp-cut-light), var(--cp-cut-light)) 0 1px / 100% 1px no-repeat;
+}
+.cp-lozenge { width: 0.5rem; height: 0.5rem; rotate: 45deg; border-radius: 1px; }
+
+/* ── kbd: a struck key ───────────────────────────────────────────────── */
+
+.cp-kbd {
+  display: inline-grid;
+  place-items: center;
+  min-width: 1.6rem;
+  height: 1.6rem;
+  padding: 0 0.4rem;
+  border-radius: 3px;
+  /* Keycaps are lettered in a sans, and the mono's command glyphs are tiny. */
+  font-family: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1;
+  vertical-align: middle;
+}
+.cp-kbd.cp-face {
+  box-shadow:
+    inset 0 1px 0 rgb(var(--cp-m-sheen) / 0.55),
+    inset 0 -2px 0 rgb(0 0 0 / 0.25),
+    0 1px 0 var(--cp-m-edge),
+    0 2px 3px -1px var(--cp-drop);
+}
+
+/* ── progress ────────────────────────────────────────────────────────── */
+/* An engraved channel with metal poured to the value. Without a value, a
+   bead of light runs along the channel instead. */
+
+.cp-progress { position: relative; height: 0.5rem; border-radius: 999px; overflow: hidden; }
+.cp-progress-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: calc(var(--cp-v, 0) * 100%);
+  border-radius: 999px;
+  border-width: 0 !important;
+  transition: width 0.6s var(--cp-ease);
+  box-shadow: inset 0 1px 0 rgb(var(--cp-m-sheen) / 0.45), inset 0 -1px 1px rgb(0 0 0 / 0.3) !important;
+}
+.cp-progress[data-indeterminate='true'] .cp-progress-fill {
+  width: 35%;
+  animation: cp-run 1.6s var(--cp-ease) infinite;
+}
+@keyframes cp-run {
+  from { transform: translateX(-110%); }
+  to { transform: translateX(300%); }
+}
+
+/* Engraved type: a hairline shadow under the plate lifts it off the paper. */
+.cp-engraved-text svg { filter: drop-shadow(0 1px 0.5px var(--cp-drop)); }
+
+/* ── tooltip: a struck tag ──────────────────────────────────────────── */
+
+.cp-tip-anchor { position: relative; display: inline-flex; }
+.cp-tip {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  z-index: 50;
+  translate: -50% 4px;
+  padding: 0.4rem 0.6rem;
+  border-radius: var(--cp-radius);
+  font-family: var(--cp-font-mono);
+  font-size: 0.625rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.18s var(--cp-ease), translate 0.28s var(--cp-ease);
+  --cp-pool: 8rem;
+}
+.cp-tip::after {
+  /* The tag's tongue: a small struck triangle toward what it names. */
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 100%;
+  width: 7px;
+  height: 7px;
+  translate: -50% -4px;
+  rotate: 45deg;
+  background: var(--cp-m-lo);
+  border-right: 1px solid var(--cp-m-edge);
+  border-bottom: 1px solid var(--cp-m-edge);
+}
+.cp-tip-anchor[data-side='bottom'] .cp-tip { bottom: auto; top: calc(100% + 10px); translate: -50% -4px; }
+.cp-tip-anchor[data-side='bottom'] .cp-tip::after { top: auto; bottom: 100%; translate: -50% 4px; background: var(--cp-m-hi); border: 0; border-left: 1px solid var(--cp-m-edge); border-top: 1px solid var(--cp-m-edge); }
+.cp-tip-anchor:hover .cp-tip,
+.cp-tip-anchor:focus-within .cp-tip { opacity: 1; translate: -50% 0; transition-delay: 0.25s; }
+.cp-tip-anchor:focus-within .cp-tip { transition-delay: 0s; }
+
+/* ── dialog: a plate laid over the page ──────────────────────────────── */
+
+.cp-dialog {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  max-width: min(32rem, calc(100vw - 32px));
+  width: 100%;
+  color: var(--cp-ink);
+  overflow: visible;
+}
+.cp-dialog::backdrop {
+  background: color-mix(in srgb, var(--cp-paper) 55%, transparent);
+  backdrop-filter: blur(6px) saturate(0.8);
+}
+.cp-dialog-plate {
+  padding: 1.75rem;
+  background: var(--cp-paper);
+  border: 1px solid var(--cp-rule-2);
+  border-radius: var(--cp-radius);
+  box-shadow:
+    inset 1px 1px 0 var(--cp-cut-light),
+    inset -1px -1px 0 var(--cp-cut-dark),
+    inset 0 0 0 8px var(--cp-paper),
+    inset 0 0 0 9px var(--cp-rule),
+    0 30px 80px -30px var(--cp-drop),
+    0 12px 24px -16px var(--cp-drop);
+}
+.cp-dialog-footer { display: flex; justify-content: flex-end; gap: 0.6rem; margin-top: 1.5rem; flex-wrap: wrap; }
+.cp-dialog[open] .cp-dialog-plate { animation: cp-lay 0.42s var(--cp-ease); }
+.cp-dialog[open]::backdrop { animation: cp-fade 0.3s var(--cp-ease); }
+@keyframes cp-lay { from { opacity: 0; transform: translateY(10px) scale(0.985); } }
+@keyframes cp-fade { from { opacity: 0; } }
+
+/* ── menu: a small plate of choices ──────────────────────────────────── */
+
+.cp-menu { position: relative; display: inline-flex; }
+.cp-menu-plate {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  z-index: 60;
+  min-width: 12rem;
+  padding: 0.35rem;
+  background: var(--cp-paper);
+  border: 1px solid var(--cp-rule-2);
+  border-radius: var(--cp-radius);
+  box-shadow:
+    inset 0 0 0 3px var(--cp-paper),
+    inset 0 0 0 4px var(--cp-rule),
+    0 18px 40px -18px var(--cp-drop),
+    0 4px 10px -6px var(--cp-drop);
+  animation: cp-drop 0.24s var(--cp-ease);
+  transform-origin: top left;
+}
+.cp-menu-plate[data-align='end'] { left: auto; right: 0; transform-origin: top right; }
+@keyframes cp-drop { from { opacity: 0; transform: translateY(-4px) scale(0.98); } }
+.cp-menu-item {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: var(--cp-radius);
+  font-family: var(--cp-font-body);
+  font-size: 0.95rem;
+  color: var(--cp-ink);
+  cursor: pointer;
+  outline: none;
+  --cp-pool: 12rem;
+}
+.cp-menu-item:hover,
+.cp-menu-item:focus-visible {
+  background: var(--cp-face-bg);
+  background-blend-mode: soft-light, overlay, normal, normal;
+  color: var(--cp-m-ink);
+  text-shadow: 0 1px 0 rgb(var(--cp-m-sheen) / 0.5);
+  box-shadow: inset 0 1px 0 rgb(var(--cp-m-sheen) / 0.5), inset 0 -1px 0 rgb(0 0 0 / 0.2);
+}
+.cp-menu-item[aria-disabled='true'] { opacity: 0.45; cursor: not-allowed; background: none; box-shadow: none; color: var(--cp-ink); text-shadow: none; }
+.cp-menu-item .cp-kbd { margin-left: auto; }
+.cp-menu-label { padding: 0.5rem 0.65rem 0.3rem; color: var(--cp-ink-3); font-size: 0.625rem; }
+.cp-menu-rule { height: 2px; margin: 0.3rem 0.4rem; background: linear-gradient(var(--cp-cut-dark), var(--cp-cut-dark)) 0 0 / 100% 1px no-repeat, linear-gradient(var(--cp-cut-light), var(--cp-cut-light)) 0 1px / 100% 1px no-repeat; }
+/* The menu plate carries the metal vars for its items. */
+.cp-menu-plate:not([data-metal]) { --cp-m-hi: #e3a676; --cp-m-mid: #b8703f; --cp-m-lo: #86471f; --cp-m-edge: #5f2f12; --cp-m-ink: #3a1b09; --cp-m-sheen: 255 236 212; }
+.cp-menu-item { --cp-face-bg:
+    radial-gradient(var(--cp-pool) circle at var(--cp-lx, 28%) var(--cp-ly, -30%), rgb(var(--cp-m-sheen) / 0.85) 0%, rgb(var(--cp-m-sheen) / 0.3) 22%, transparent 58%),
+    linear-gradient(180deg, var(--cp-m-hi) 0%, var(--cp-m-mid) 55%, var(--cp-m-lo) 100%); }
+
+/* ── accordion ───────────────────────────────────────────────────────── */
+
+.cp-accordion { border-top: 1px solid var(--cp-rule-2); box-shadow: inset 0 1px 0 var(--cp-cut-light); }
+.cp-accordion-item { border-bottom: 1px solid var(--cp-rule-2); box-shadow: 0 1px 0 var(--cp-cut-light); interpolate-size: allow-keywords; }
+.cp-accordion-item summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1rem 0.1rem;
+  cursor: pointer;
+  list-style: none;
+  font-family: var(--cp-font-display);
+  font-size: 1.125rem;
+  font-weight: 420;
+  color: var(--cp-ink);
+}
+.cp-accordion-item summary::-webkit-details-marker { display: none; }
+.cp-accordion-item summary:focus-visible { outline: none; box-shadow: 0 0 0 1.5px var(--cp-accent); border-radius: var(--cp-radius); }
+.cp-accordion-mark { width: 0.8rem; height: 0.8rem; color: var(--cp-accent); transition: rotate 0.4s var(--cp-ease); flex-shrink: 0; }
+.cp-accordion-item[open] .cp-accordion-mark { rotate: 45deg; }
+.cp-accordion-body { padding: 0 0.1rem 1.1rem; font-family: var(--cp-font-body); font-size: 0.975rem; line-height: 1.6; color: var(--cp-ink-2); }
+.cp-accordion-item::details-content { block-size: 0; overflow: clip; transition: block-size 0.42s var(--cp-ease), content-visibility 0.42s allow-discrete; }
+.cp-accordion-item[open]::details-content { block-size: auto; }
+
+/* ── alert ───────────────────────────────────────────────────────────── */
+
+.cp-alert {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.9rem;
+  padding: 0.95rem 1.1rem 0.95rem 0.95rem;
+  background: var(--cp-paper-2);
+  border: 1px solid var(--cp-rule-2);
+  border-radius: var(--cp-radius);
+  box-shadow: inset 0 0 0 3px var(--cp-paper-2), inset 0 0 0 4px var(--cp-rule);
+}
+.cp-alert-strip { width: 5px; border-radius: 1px; border-width: 1px; --cp-pool: 6rem; }
+.cp-alert-title { margin: 0; font-family: var(--cp-font-display); font-size: 1.02rem; font-weight: 480; color: var(--cp-ink); }
+.cp-alert-body { margin-top: 0.2rem; font-family: var(--cp-font-body); font-size: 0.93rem; line-height: 1.5; color: var(--cp-ink-2); }
+
+/* ── toast ───────────────────────────────────────────────────────────── */
+
+.cp-toaster { position: fixed; right: 20px; bottom: 20px; z-index: 100; display: grid; gap: 10px; justify-items: end; pointer-events: none; }
+.cp-toast {
+  width: min(22rem, calc(100vw - 40px));
+  padding: 0.85rem 1rem;
+  border-radius: var(--cp-radius);
+  pointer-events: auto;
+  animation: cp-toast-in 0.5s var(--cp-ease-strike);
+  --cp-pool: 18rem;
+}
+.cp-toast[data-leaving] { animation: cp-toast-out 0.32s var(--cp-ease) forwards; }
+@keyframes cp-toast-in { from { opacity: 0; transform: translateY(14px) scale(0.97); } }
+@keyframes cp-toast-out { to { opacity: 0; transform: translateX(16px); } }
+.cp-toast-title { margin: 0; font-family: var(--cp-font-display); font-size: 1rem; font-weight: 520; color: var(--cp-m-ink); text-shadow: 0 1px 0 rgb(var(--cp-m-sheen) / 0.5); }
+.cp-toast-body { margin: 0.2rem 0 0; font-family: var(--cp-font-body); font-size: 0.9rem; color: color-mix(in srgb, var(--cp-m-ink) 82%, transparent); }
+
+/* ── avatar ──────────────────────────────────────────────────────────── */
+
+.cp-avatar {
+  display: inline-block;
+  flex-shrink: 0;
+  padding: 3px;
+  border-radius: 50%;
+  vertical-align: middle;
+  --cp-pool: 6rem;
+}
+
+/* ── table: a ruled ledger ───────────────────────────────────────────── */
+
+.cp-table { width: 100%; border-collapse: collapse; font-family: var(--cp-font-body); font-size: 0.975rem; color: var(--cp-ink); }
+.cp-table th { text-align: left; padding: 0 0.75rem 0.6rem; font-size: 0.625rem; color: var(--cp-ink-3); border-bottom: 1px solid var(--cp-rule-2); }
+.cp-table td { padding: 0.75rem; border-bottom: 1px solid var(--cp-rule); box-shadow: 0 1px 0 var(--cp-cut-light); }
+.cp-table th:first-child, .cp-table td:first-child { padding-left: 0.1rem; }
+.cp-table tbody tr { transition: background-color 0.25s var(--cp-ease); }
+.cp-table tbody tr:hover { background: color-mix(in srgb, var(--cp-accent) 6%, transparent); }
+.cp-table td[data-num] { text-align: right; font-family: var(--cp-font-mono); font-size: 0.8125rem; font-variant-numeric: tabular-nums; }
+
+/* ── skeleton ────────────────────────────────────────────────────────── */
+
+.cp-skeleton { position: relative; overflow: hidden; border-radius: var(--cp-radius); min-height: 0.9rem; }
+.cp-skeleton::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, color-mix(in srgb, var(--cp-accent) 16%, transparent) 50%, transparent 70%);
+  translate: -100% 0;
+  animation: cp-pass 1.8s var(--cp-ease) infinite;
+}
+@keyframes cp-pass { to { translate: 100% 0; } }
+
+/* ── motion ──────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  .cp-button,
+  .cp-check-tile,
+  .cp-switch-thumb,
+  .cp-switch-inlay,
+  .cp-tabs-plate,
+  .cp-progress-fill,
+  .cp-slider-thumb,
+  .cp-tip,
+  .cp-accordion-mark { transition: none !important; }
+  .cp-dialog[open] .cp-dialog-plate,
+  .cp-menu-plate,
+  .cp-toast,
+  .cp-skeleton::after { animation: none !important; }
+  .cp-progress[data-indeterminate='true'] .cp-progress-fill { animation: none; width: 100%; opacity: 0.6; }
+}

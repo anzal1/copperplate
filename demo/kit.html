@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex" />
+    <title>Copperplate kit</title>
+    <link rel="stylesheet" href="./fonts.css" />
+    <style>
+      html, body { margin: 0; }
+      body { background: #0f0d0b; }
+      .sheet { display: grid; grid-template-columns: 1fr 1fr; min-height: 100vh; }
+      @media (max-width: 900px) { .sheet { grid-template-columns: 1fr; } }
+      .side { background: var(--cp-paper); color: var(--cp-ink); padding: 48px 40px 80px; }
+      .side h2 { font-family: var(--cp-font-display); font-weight: 400; font-size: 1.75rem; letter-spacing: -0.01em; margin: 0 0 4px; }
+      .sec { margin-top: 44px; }
+      .sec > .cp-label { display: block; margin-bottom: 16px; color: var(--cp-ink-3); }
+      .row { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+      .col { display: grid; gap: 18px; max-width: 420px; }
+      .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 18px; }
+      .seal { width: 118px; height: 118px; } .hallmark { height: 34px; width: auto; }
+      .lede { font-family: var(--cp-font-body); color: var(--cp-ink-2); margin: 0; font-size: 1.05rem; }
+    </style>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="./kit.tsx"></script>
+  </body>
+</html>

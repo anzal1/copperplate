@@ -1,10 +1,12 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useSyncExternalStore, type HTMLAttributes } from 'react';
 import { engrave, type Engraving as Plate } from './engrave.js';
 import { getLamp, subscribeLamp, type LampState } from './lamp.js';
+import { illuminate } from './surface.js';
 import type { EngraveOptions } from './options.js';
 
 export { requestMotionLight, stopMotionLight, setLamp, getLamp, subscribeLamp } from './lamp.js';
 export { MATERIALS } from './materials.js';
+export { illuminate, relight, followLamp } from './surface.js';
 export type { EngraveOptions } from './options.js';
 export type { LampState } from './lamp.js';
 export type { Material, MaterialName, MaterialColors } from './materials.js';
@@ -57,4 +59,16 @@ const serverSnapshot = () => null;
  */
 export function useLamp(): LampState | null {
   return useSyncExternalStore(subscribeLamp, getLamp, serverSnapshot);
+}
+
+/**
+ * Light an element you render yourself: pass the ref of any element and its
+ * CSS gets --cp-lx, --cp-ly and friends (see illuminate). The metal
+ * components use this; it is exported for your own surfaces.
+ */
+export function useIlluminate<T extends HTMLElement | SVGElement>(ref: { current: T | null }): void {
+  useEffect(() => {
+    if (!ref.current) return;
+    return illuminate(ref.current);
+  }, [ref]);
 }
